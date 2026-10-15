@@ -6,8 +6,10 @@ Cada guía es independiente y desarrolla fundamentos e implementación con
 ejemplos explicados, partiendo de Python y terminal básicos.
 Docker incluye además **Dockerfile** y **Docker Compose** para profundizar
 después de los fundamentos.
-LLM Engineering incluye **Week 1** y **Week 2**, con apuntes por temas,
+LLM Engineering incluye **Week 1**, **Week 2** y **Week 3**, con apuntes por temas,
 ejemplos de código y explicaciones de las operaciones utilizadas en el curso.
+Week 3 desarrolla la inferencia con Hugging Face, tokenizadores, cuantización
+y la creación de actas a partir de audio.
 
 **Web:** https://app.sheet-codes.workers.dev
 
@@ -19,14 +21,15 @@ npx pnpm@10.32.1 install --frozen-lockfile
 npm run dev
 ```
 
-Abre http://localhost:4000. Los siete documentos están en `source/_posts/`.
+Abre http://localhost:4000. Los ocho documentos están en `source/_posts/`.
 La plantilla de lectura es `themes/coo/layout/learning.ejs`; los estilos comunes,
 `themes/coo/source/css/learning.css`. El catálogo tiene cuatro menús de temas.
 Django y Redis ofrecen «Base»; Docker ofrece «Base»,
 «Dockerfile» y «Docker Compose». Se mantienen las rutas principales `/django.html`,
 `/docker.html` y `/redis.html`; las ampliaciones usan `/docker-dockerfile.html`
-y `/docker-compose.html`. LLM Engineering abre un menú horizontal con «Week 1»
-y «Week 2», enlazadas a `/llm-week-1.html` y `/llm-week-2.html`.
+y `/docker-compose.html`. LLM Engineering abre un menú horizontal con «Week 1»,
+«Week 2» y «Week 3», enlazadas a `/llm-week-1.html`, `/llm-week-2.html`
+y `/llm-week-3.html`.
 
 Las guías usan `learning-page-cards`. `disableNunjucks: true` permite explicar templates Django
 sin que Hexo intente ejecutar su sintaxis. El índice se genera a partir de los
@@ -40,7 +43,7 @@ npm run build
 npm run test:build
 ```
 
-La comprobación exige exactamente las siete rutas y sus opciones de menú,
+La comprobación exige exactamente las ocho rutas y sus opciones de menú,
 estilos de lectura consistentes, todos los encabezados renderizados y enlaces
 internos válidos. Los cambios de interfaz requieren además comprobar búsqueda,
 menús, copia de código, navegación con teclado y pantallas estrechas.

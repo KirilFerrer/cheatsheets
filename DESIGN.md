@@ -4,10 +4,10 @@ The visual baseline is the deployed site at https://app.sheet-codes.workers.dev,
 recovered on 18 September 2026. Keep its catalogue with four entry points:
 Django, Docker, Redis and LLM Engineering. Django and Redis each expose `Base`. Docker exposes
 `Base`, `Dockerfile` and `Docker Compose`, in that order, with the latter two as
-focused follow-up guides. LLM Engineering exposes `Week 1` and `Week 2`, in that
+focused follow-up guides. LLM Engineering exposes `Week 1`, `Week 2` and `Week 3`, in that
 order, through the same horizontal topic panel. All catalogue cards occupy one
 grid column and share the same dimensions at each viewport width. Each week has its own page and index
-at `/llm-week-1.html` and `/llm-week-2.html`. The catalogue and search expose seven guides in four topics.
+at `/llm-week-1.html`, `/llm-week-2.html` and `/llm-week-3.html`. The catalogue and search expose eight guides in four topics.
 Single-option panels use a compact 320px preferred width; panels with more
 options size to their cards within viewport bounds.
 Hide empty catalogue categories so every visible group contains a guide.
@@ -52,7 +52,7 @@ develop image construction and Compose configuration without expanding Base into
 a reference manual. Further subtopics can be added when requested; do not publish
 empty placeholders or separate glossaries.
 
-The LLM Engineering weeks stay grounded in the course notebooks. Both weeks use
+The LLM Engineering weeks stay grounded in the course notebooks. All weeks use
 plain subject headings, short explanations, working code and concrete results.
 Cover JSON, Python data structures, API calls, history, streaming and scraping.
 Use the existing reading index for navigation. Tables are limited to explicitly
@@ -63,6 +63,12 @@ Keep explanations tied to implementation and identify shared variables.
 Week 2 covers model clients, usage, caching, Gradio 5, generators, chat history,
 tool calls, SQLite, images, audio and Blocks events. Match the course's installed
 API and Gradio versions, and explain the input/output contracts with runnable code.
+Week 3 follows the five linked Colab notebooks: hosted GPU execution, the Hub,
+pipelines, image and speech demonstrations, tokenizers, chat templates, model
+loading, quantization, generation, memory and audio-to-minutes composition.
+Keep repeated demonstrations brief. Explain where inference runs and connect
+messages, tensors and decoded output. Use Transformers 4.57.6 as in the course,
+with explicit shared state and sequential GPU model loading.
 
 Verify the four catalogue dialogs, keyboard navigation, search, theme switching,
 code copying, local anchors and mobile overflow whenever the reading shell changes.

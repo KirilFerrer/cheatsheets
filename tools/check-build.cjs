@@ -12,7 +12,8 @@ const titles = {
   'docker-compose': 'Docker Compose',
   redis: 'Redis · Base',
   'llm-week-1': 'LLM Engineering · Week 1',
-  'llm-week-2': 'LLM Engineering · Week 2'
+  'llm-week-2': 'LLM Engineering · Week 2',
+  'llm-week-3': 'LLM Engineering · Week 3'
 };
 const expected = Object.keys(titles);
 assert.deepEqual(
@@ -81,7 +82,8 @@ const catalogue = {
   redis: [['redis', 'Base']],
   llm: [
     ['llm-week-1', 'Week 1'],
-    ['llm-week-2', 'Week 2']
+    ['llm-week-2', 'Week 2'],
+    ['llm-week-3', 'Week 3']
   ]
 };
 for (const [family, options] of Object.entries(catalogue)) {

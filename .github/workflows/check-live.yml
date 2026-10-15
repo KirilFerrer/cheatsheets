@@ -54,6 +54,7 @@ jobs:
                       '/redis.html': 'Redis · Base',
                       '/llm-week-1.html': 'LLM Engineering · Week 1',
                       '/llm-week-2.html': 'LLM Engineering · Week 2',
+                      '/llm-week-3.html': 'LLM Engineering · Week 3',
                   }
                   assert {sheet['path']: sheet['title'] for sheet in sheets} == expected_titles
                   assert all(sheet.get('title') and sheet['path'].startswith('/') for sheet in sheets)
@@ -68,7 +69,7 @@ jobs:
                   print(f'All {len(sheets)} topic pages have their shared reading layout')
               if route == '/site-version.json':
                   version = json.loads(body)
-                  assert version['guides'] == 7
+                  assert version['guides'] == 8
                   if os.environ.get('EXPECTED_REVISION'):
                       assert version['revision'] == os.environ['EXPECTED_REVISION'], version
               if route in ['/robots.txt', '/sitemap.xml']:
