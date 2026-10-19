@@ -73,7 +73,6 @@
     <!-- styles -->
     <%- css('css/style.css') %>
     <%- css('css/learning.css') %>
-    <% if (page.python_labs) { %><%- css('css/python-labs.css') %><% } %>
     <script>
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             let html = document.documentElement.classList;

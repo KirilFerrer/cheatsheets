@@ -28,8 +28,8 @@ jobs:
           routes = [('/', 200), ('/custom/', 200), ('/django', 200), ('/django.html', 200),
                     ('/search.json', 200), ('/about/', 200), ('/LICENSE.txt', 200),
                     ('/site-version.json', 200), ('/css/learning.css', 200),
-                    ('/css/python-labs.css', 200), ('/js/python-labs.js', 200),
-                    ('/js/python-worker.js', 200), ('/assets/python/io.py', 200),
+                    ('/js/learning.js', 200), ('/js/python-labs.js', 404),
+                    ('/js/python-worker.js', 404),
                     ('/robots.txt', 200), ('/sitemap.xml', 200),
                     ('/missing-sheet-123', 404)]
           for route, expected in routes:
@@ -57,7 +57,7 @@ jobs:
                       '/llm-week-1.html': 'LLM Engineering · Week 1',
                       '/llm-week-2.html': 'LLM Engineering · Week 2',
                       '/llm-week-3.html': 'LLM Engineering · Week 3',
-                      '/python-asincronia.html': 'Python · Asincronía y concurrencia',
+                      '/python-asincronia.html': 'Python · Asincronía',
                   }
                   assert {sheet['path']: sheet['title'] for sheet in sheets} == expected_titles
                   assert all(sheet.get('title') and sheet['path'].startswith('/') for sheet in sheets)
@@ -69,6 +69,9 @@ jobs:
                       assert sheet['title'] == expected_titles[sheet['path']], sheet['path']
                       assert 'learning-page-cards' in html and 'css/learning.css' in html, sheet['path']
                       assert 'Cómo trabajar con estos apuntes' not in html, sheet['path']
+                      if sheet['path'] == '/python-asincronia.html':
+                          assert 'data-python-demo' not in html and 'python-labs' not in html
+                          assert '>Asincronía</h1>' in html
                   print(f'All {len(sheets)} topic pages have their shared reading layout')
               if route == '/site-version.json':
                   version = json.loads(body)
@@ -79,7 +82,9 @@ jobs:
                   assert origin in body and 'tjht2vnmkyrj' not in body
               if route == '/':
                   assert 'Sheet Codes' in body and origin in body
-                  assert 'data-series-trigger="custom"' in body
+                  assert 'series-custom' not in body and '>Conceptos</h2>' not in body
+                  assert '>Custom</h2>' in body and 'href="/python-asincronia.html"' in body
+                  assert '<p>Asincronía</p>' in body
               if route == '/custom/':
                   assert '/python-asincronia.html' in body
               print(route, status, final_url)

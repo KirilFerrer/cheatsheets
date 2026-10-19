@@ -1,17 +1,19 @@
 # Sheet Codes
 
 The visual baseline is the deployed site at https://app.sheet-codes.workers.dev,
-recovered on 18 September 2026. Keep its catalogue with five entry points:
-Django, Docker, Redis, LLM Engineering and Custom. Django and Redis each expose `Base`. Docker exposes
+recovered on 18 September 2026. Keep its catalogue with five cards:
+Django, Docker, Redis, LLM Engineering and Asincronía. Django and Redis each expose `Base`. Docker exposes
 `Base`, `Dockerfile` and `Docker Compose`, in that order, with the latter two as
 focused follow-up guides. LLM Engineering exposes `Week 1`, `Week 2` and `Week 3`, in that
 order, through the same horizontal topic panel. All catalogue cards occupy one
 grid column and share the same dimensions at each viewport width. Each week has its own page and index
 at `/llm-week-1.html`, `/llm-week-2.html` and `/llm-week-3.html`. The catalogue and search expose nine guides in five topics.
-Custom is a collection of specific programming concepts at `/custom/`; its first
-guide, `Asincronía Python`, lives at `/python-asincronia.html`. Its topic menu and
-index derive from posts in the `Custom` category so later concepts do not require
-a second hand-maintained list. The homepage groups this entry under `Conceptos`.
+Custom is the homepage section for specific programming topics. Its first card,
+`Asincronía`, links directly to `/python-asincronia.html`. Do not add an intermediate
+Custom card or menu, or group it under a heading named Conceptos. The section's
+cards and its collection index at `/custom/` derive from posts in the `Custom`
+category so later topics do not require a second hand-maintained list.
+The other four catalogue cards retain their existing topic dialogs.
 Single-option panels use a compact 320px preferred width; panels with more
 options size to their cards within viewport bounds.
 Hide empty catalogue categories so every visible group contains a guide.
@@ -34,18 +36,10 @@ Custom follows the same token ownership model: runtime CSS is canonical and this
 document records its accepted values (Model B). `.learning-custom` maps accent,
 tint and focus to `#0f766e`, `#ccfbf1`, `#0d9488` in light mode and `#5eead4`,
 `#123a39`, `#2dd4bf` in dark mode. Its catalogue cards use teal-700 to cyan-900.
-Educational Python panels use `themes/coo/source/css/python-labs.css` as their
-single token owner. Their dark surface is retained in both page themes: background
-`#10151e`, elevated surface `#171f2b`, text `#e5eaf2`, muted text `#b9c4d2`,
-border `#51637c`, accent `#5eead4`, error `#ff9c94`. The measured I/O timeline is
-the only chart; other experiments use concrete results and chronological events.
-Keep code visible beside its controls, meaningful labels, standard native selects
-and sliders, execution status, a stop action and a bounded execution time. Native
-select popup geometry belongs to the platform. Runtime loading begins only on
-the first explicit execution. Later automatic updates are optional, debounced and
-must never present results from older parameters as current. Python runs in one
-shared Web Worker with separate globals per experiment; this is not Python
-threading. Local-only examples explicitly identify their execution environment.
+Asincronía follows the shared reading layout: introduce each concept, show a
+complete runnable Python program, then explain its output and execution order.
+Use Python 3.11+ standard-library examples with no in-page execution panels,
+runtime downloads or charts. Keep normal code copying and the reading index.
 
 Catalogue panels and card hover effects animate only opacity and transforms.
 Use a dimmed backdrop without blur and pause the home decorations while a topic
@@ -91,5 +85,5 @@ Keep repeated demonstrations brief. Explain where inference runs and connect
 messages, tensors and decoded output. Use Transformers 4.57.6 as in the course,
 with explicit shared state and sequential GPU model loading.
 
-Verify the five catalogue dialogs, keyboard navigation, search, theme switching,
+Verify the four catalogue dialogs and direct Custom topic links, keyboard navigation, search, theme switching,
 code copying, local anchors and mobile overflow whenever the reading shell changes.

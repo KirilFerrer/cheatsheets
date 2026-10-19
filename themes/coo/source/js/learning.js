@@ -247,10 +247,7 @@
   status.className = 'learning-copy-status';
   status.setAttribute('role', 'status');
   article.append(status);
-  const addCodeCopy = (code) => {
-    if (code.dataset.copyReady) return;
-    code.dataset.copyReady = 'true';
-    code.parentElement.tabIndex = 0;
+  article.querySelectorAll('pre > code').forEach((code) => {
     // Plain-text blocks in a glossary are commands (for example redis-cli), not diagrams.
     if (
       !article.closest('.learning-glossary') &&
@@ -283,10 +280,5 @@
         selection.addRange(range);
       }
     });
-  };
-  article.querySelectorAll('pre > code').forEach(addCodeCopy);
-  document.addEventListener('learning:code-added', ({ detail }) => {
-    if (detail && article.contains(detail))
-      detail.querySelectorAll('pre > code').forEach(addCodeCopy);
   });
 })();

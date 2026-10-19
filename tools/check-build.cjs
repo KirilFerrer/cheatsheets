@@ -14,7 +14,7 @@ const titles = {
   'llm-week-1': 'LLM Engineering · Week 1',
   'llm-week-2': 'LLM Engineering · Week 2',
   'llm-week-3': 'LLM Engineering · Week 3',
-  'python-asincronia': 'Python · Asincronía y concurrencia'
+  'python-asincronia': 'Python · Asincronía'
 };
 const expected = Object.keys(titles);
 assert.deepEqual(
@@ -94,8 +94,26 @@ assert(
 );
 assert.equal(
   (homepage.match(/data-series-trigger/g) || []).length,
-  5,
-  'The catalogue must have five topic entries'
+  4,
+  'The four technology cards must retain their topic menus'
+);
+assert.deepEqual(
+  [...catalogueHtml.matchAll(/<h2\b[^>]*>([\s\S]*?)<\/h2>/g)].map((match) =>
+    stripHTML(match[1]).trim()
+  ),
+  ['Toolkit', 'Python', 'Database', 'AI', 'Custom'],
+  'Custom must be a section heading alongside the other categories'
+);
+assert(!homepage.includes('series-custom'), 'Custom topics must link directly to their guides');
+const customGrid = catalogueHtml.match(
+  />Custom<\/h2>[\s\S]*?<div\b[^>]*catalogue-grid[^>]*>([\s\S]*)/
+)?.[1];
+assert(customGrid, 'Missing Custom topic cards');
+const customLinks = [...customGrid.matchAll(/<a\b[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g)];
+assert.deepEqual(
+  customLinks.map((link) => [link[1], stripHTML(link[2]).trim()]),
+  [['/python-asincronia.html', 'Asincronía']],
+  'The Custom section must offer a direct Asincronía card'
 );
 const catalogue = {
   django: [['django', 'Base']],
@@ -109,8 +127,7 @@ const catalogue = {
     ['llm-week-1', 'Week 1'],
     ['llm-week-2', 'Week 2'],
     ['llm-week-3', 'Week 3']
-  ],
-  custom: [['python-asincronia', 'Asincronía Python']]
+  ]
 };
 for (const [family, options] of Object.entries(catalogue)) {
   const dialog = [...homepage.matchAll(/<dialog\b[^>]*>[\s\S]*?<\/dialog>/g)].find((match) =>
@@ -137,22 +154,26 @@ assert(
 );
 assert(fs.existsSync(path.join(output, 'js/learning.js')));
 const pythonGuide = fs.readFileSync(path.join(output, 'python-asincronia.html'), 'utf8');
-assert.equal((pythonGuide.match(/data-python-demo=/g) || []).length, 6);
-assert(pythonGuide.includes('css/python-labs.css') && pythonGuide.includes('js/python-labs.js'));
-assert(!fs.readFileSync(path.join(output, 'docker.html'), 'utf8').includes('js/python-labs.js'));
+assert(!/data-python-demo|python-labs|python-worker|pyodide/i.test(pythonGuide));
+assert.equal((pythonGuide.match(/<code class="[^"]*language-python/g) || []).length, 11);
+assert(/<h1\b[^>]*>Asincronía<\/h1>/.test(pythonGuide));
+assert(pythonGuide.includes('href="/custom/"'));
 assert(
   fs
     .readFileSync(path.join(output, 'custom/index.html'), 'utf8')
     .includes('/python-asincronia.html')
 );
-assert(homepage.includes('href="/custom/"'));
-for (const demo of ['io', 'latido', 'carrera', 'timeout', 'grupo', 'cola']) {
+for (const removed of [
+  'assets/python',
+  'css/python-labs.css',
+  'js/python-labs.js',
+  'js/python-worker.js'
+]) {
   assert(
-    fs.existsSync(path.join(output, `assets/python/${demo}.py`)),
-    `Missing Python demo: ${demo}`
+    !fs.existsSync(path.join(output, removed)),
+    `Obsolete runtime remains in the build: ${removed}`
   );
 }
-assert(fs.existsSync(path.join(output, 'js/python-worker.js')));
 assert(fs.existsSync(path.join(output, 'site-version.json')));
 assert(fs.existsSync(path.join(output, '404.html')), 'Pages needs a real 404 page');
 for (const promotion of [
