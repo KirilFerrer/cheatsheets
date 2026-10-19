@@ -64,6 +64,30 @@ for (const sheet of search) {
 }
 const homepage = fs.readFileSync(path.join(output, 'index.html'), 'utf8');
 assert(homepage.includes('Sheet Codes'));
+// Category headings and grids must be siblings; nesting a new category in the
+// previous grid squeezes its heading and card into individual grid columns.
+const catalogueHtml = homepage.match(
+  /<section\b[^>]*class="[^"]*\bcatalogue\b[^"]*"[^>]*>([\s\S]*?)<\/section>/
+)?.[1];
+assert(catalogueHtml, 'Missing homepage catalogue');
+let catalogueDepth = 0;
+let categoryDepth;
+for (const [tag] of catalogueHtml.matchAll(/<\/?div\b[^>]*>|<h2\b[^>]*>/g)) {
+  if (tag.startsWith('</div')) catalogueDepth -= 1;
+  else if (tag.startsWith('<div')) {
+    if (tag.includes('catalogue-grid'))
+      assert.equal(catalogueDepth, categoryDepth, 'Catalogue grids must not be nested');
+    catalogueDepth += 1;
+  } else if (tag.includes('catalogue-heading')) {
+    categoryDepth ??= catalogueDepth;
+    assert.equal(
+      catalogueDepth,
+      categoryDepth,
+      'Catalogue headings must not be inside another category'
+    );
+  }
+}
+assert.equal(catalogueDepth, 0, 'Unbalanced catalogue containers');
 assert(
   !/<div\b[^>]*class="[^"]*catalogue-grid[^"]*"[^>]*>\s*<\/div>/.test(homepage),
   'Empty catalogue categories must not be displayed'
