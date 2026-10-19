@@ -15,7 +15,7 @@
             <% if (customCategory) { customCategory.posts.sort('-date').each(function(post) { %>
                 <div>
                     <%- partial('_partial/index/card', {
-                        url: url_for(post.path), title: post.title, label: post.label,
+                        url: url_for(post.path), title: post.menu_title || post.title, label: post.label,
                         slug: post.icon || post.slug,
                         background: post.background || 'bg-gradient-to-r from-indigo-500 to-purple-600'
                     }) %>

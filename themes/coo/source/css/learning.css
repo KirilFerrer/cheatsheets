@@ -93,6 +93,18 @@ html.has-visible-navbar {
 
 /* Guide accents match their catalogue cards. */
 
+.learning-custom {
+  --learn-accent: #0f766e;
+  --learn-tint: #ccfbf1;
+  --learn-focus: #0d9488;
+}
+
+.dark .learning-custom {
+  --learn-accent: #5eead4;
+  --learn-tint: #123a39;
+  --learn-focus: #2dd4bf;
+}
+
 .learning-llm {
   --learn-accent: #6d28d9;
   --learn-tint: #ede9fe;

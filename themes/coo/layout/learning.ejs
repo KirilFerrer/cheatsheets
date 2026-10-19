@@ -2,7 +2,7 @@
   <header class="learning-header">
     <nav aria-label="Ruta de navegación" class="learning-breadcrumb">
       <a href="/">Sheet Codes</a><span aria-hidden="true">/</span>
-      <span><%= page.series_title || (page.icon === 'django' ? 'Django' : page.icon === 'docker' ? 'Docker' : 'Redis') %></span>
+      <% if (page.series_path) { %><a href="<%= page.series_path %>"><%= page.series_title %></a><% } else { %><span><%= page.series_title || (page.icon === 'django' ? 'Django' : page.icon === 'docker' ? 'Docker' : 'Redis') %></span><% } %>
       <span aria-hidden="true">/</span><span aria-current="page"><%= page.heading %></span>
     </nav>
     <h1><%= page.heading %></h1>

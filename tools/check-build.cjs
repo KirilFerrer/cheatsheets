@@ -13,7 +13,8 @@ const titles = {
   redis: 'Redis · Base',
   'llm-week-1': 'LLM Engineering · Week 1',
   'llm-week-2': 'LLM Engineering · Week 2',
-  'llm-week-3': 'LLM Engineering · Week 3'
+  'llm-week-3': 'LLM Engineering · Week 3',
+  'python-asincronia': 'Python · Asincronía y concurrencia'
 };
 const expected = Object.keys(titles);
 assert.deepEqual(
@@ -69,8 +70,8 @@ assert(
 );
 assert.equal(
   (homepage.match(/data-series-trigger/g) || []).length,
-  4,
-  'The catalogue must have four guide entries'
+  5,
+  'The catalogue must have five topic entries'
 );
 const catalogue = {
   django: [['django', 'Base']],
@@ -84,7 +85,8 @@ const catalogue = {
     ['llm-week-1', 'Week 1'],
     ['llm-week-2', 'Week 2'],
     ['llm-week-3', 'Week 3']
-  ]
+  ],
+  custom: [['python-asincronia', 'Asincronía Python']]
 };
 for (const [family, options] of Object.entries(catalogue)) {
   const dialog = [...homepage.matchAll(/<dialog\b[^>]*>[\s\S]*?<\/dialog>/g)].find((match) =>
@@ -110,6 +112,23 @@ assert(
   fs.readFileSync(path.join(output, 'css/learning.css'), 'utf8').includes('.learning-page-cards')
 );
 assert(fs.existsSync(path.join(output, 'js/learning.js')));
+const pythonGuide = fs.readFileSync(path.join(output, 'python-asincronia.html'), 'utf8');
+assert.equal((pythonGuide.match(/data-python-demo=/g) || []).length, 6);
+assert(pythonGuide.includes('css/python-labs.css') && pythonGuide.includes('js/python-labs.js'));
+assert(!fs.readFileSync(path.join(output, 'docker.html'), 'utf8').includes('js/python-labs.js'));
+assert(
+  fs
+    .readFileSync(path.join(output, 'custom/index.html'), 'utf8')
+    .includes('/python-asincronia.html')
+);
+assert(homepage.includes('href="/custom/"'));
+for (const demo of ['io', 'latido', 'carrera', 'timeout', 'grupo', 'cola']) {
+  assert(
+    fs.existsSync(path.join(output, `assets/python/${demo}.py`)),
+    `Missing Python demo: ${demo}`
+  );
+}
+assert(fs.existsSync(path.join(output, 'js/python-worker.js')));
 assert(fs.existsSync(path.join(output, 'site-version.json')));
 assert(fs.existsSync(path.join(output, '404.html')), 'Pages needs a real 404 page');
 for (const promotion of [

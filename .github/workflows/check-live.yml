@@ -25,9 +25,11 @@ jobs:
 
           origin = 'https://app.sheet-codes.workers.dev'
           headers = {'User-Agent': 'SheetCodesDeploymentCheck/1.0 (+https://github.com/CPX-001/cheatsheets)'}
-          routes = [('/', 200), ('/django', 200), ('/django.html', 200),
+          routes = [('/', 200), ('/custom/', 200), ('/django', 200), ('/django.html', 200),
                     ('/search.json', 200), ('/about/', 200), ('/LICENSE.txt', 200),
                     ('/site-version.json', 200), ('/css/learning.css', 200),
+                    ('/css/python-labs.css', 200), ('/js/python-labs.js', 200),
+                    ('/js/python-worker.js', 200), ('/assets/python/io.py', 200),
                     ('/robots.txt', 200), ('/sitemap.xml', 200),
                     ('/missing-sheet-123', 404)]
           for route, expected in routes:
@@ -55,10 +57,11 @@ jobs:
                       '/llm-week-1.html': 'LLM Engineering · Week 1',
                       '/llm-week-2.html': 'LLM Engineering · Week 2',
                       '/llm-week-3.html': 'LLM Engineering · Week 3',
+                      '/python-asincronia.html': 'Python · Asincronía y concurrencia',
                   }
                   assert {sheet['path']: sheet['title'] for sheet in sheets} == expected_titles
                   assert all(sheet.get('title') and sheet['path'].startswith('/') for sheet in sheets)
-                  assert {sheet['path'].split('-')[0].split('.')[0] for sheet in sheets} == {'/django', '/docker', '/redis', '/llm'}
+                  assert {sheet['path'].split('-')[0].split('.')[0] for sheet in sheets} == {'/django', '/docker', '/redis', '/llm', '/python'}
                   for sheet in sheets:
                       with urlopen(Request(origin + sheet['path'], headers=headers), timeout=20) as response:
                           html = response.read().decode()
@@ -69,11 +72,14 @@ jobs:
                   print(f'All {len(sheets)} topic pages have their shared reading layout')
               if route == '/site-version.json':
                   version = json.loads(body)
-                  assert version['guides'] == 8
+                  assert version['guides'] == 9
                   if os.environ.get('EXPECTED_REVISION'):
                       assert version['revision'] == os.environ['EXPECTED_REVISION'], version
               if route in ['/robots.txt', '/sitemap.xml']:
                   assert origin in body and 'tjht2vnmkyrj' not in body
               if route == '/':
                   assert 'Sheet Codes' in body and origin in body
+                  assert 'data-series-trigger="custom"' in body
+              if route == '/custom/':
+                  assert '/python-asincronia.html' in body
               print(route, status, final_url)
