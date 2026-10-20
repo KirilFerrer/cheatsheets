@@ -9,490 +9,334 @@ icon: 'python'
 series_title: 'Custom'
 series_path: '/custom/'
 categories: ['Custom']
-intro: 'Cómo funcionan async def, await y el bucle de eventos de Python: ejecutar tareas concurrentes, limitar el trabajo y gestionar sus resultados y errores.'
+intro: 'Concurrencia, corrutinas y bucle de eventos. Cómo se organizan las esperas, qué hacen async y await y cuándo intervienen los hilos y los procesos.'
 heading: 'Asincronía'
 menu_title: 'Asincronía'
 learning_classes: 'learning-page learning-custom learning-page-cards'
 background: 'bg-gradient-to-r from-teal-700 to-cyan-900 !text-white'
 ---
 
-## 1. Partir de un programa secuencial
+## Concurrencia, paralelismo y asincronía
 
-Una aplicación puede necesitar consultar usuarios, pedidos y productos antes de preparar una respuesta. Durante cada consulta pasa tiempo esperando a que otro servicio conteste. Si empieza la siguiente únicamente cuando acaba la anterior, acumula esas esperas.
+Una aplicación puede necesitar consultar usuarios, pedidos y productos antes de preparar una respuesta. Si espera la respuesta de usuarios antes de pedir los pedidos, y después hace lo mismo con los productos, las tres operaciones avanzan en secuencia.
 
-La **programación asíncrona** permite suspender una operación mientras espera y atender otra durante ese intervalo. Es especialmente útil para entrada y salida: red, conexiones o servicios externos. No implica que varios cálculos se estén ejecutando al mismo tiempo.
+Durante buena parte de una consulta de red, la CPU no está calculando la respuesta: espera a que otro sistema la envíe. Esa espera deja una oportunidad para atender otras operaciones.
 
-Los ejemplos de esta guía utilizan **Python 3.11 o posterior** y solo su biblioteca estándar. Cada bloque Python es un programa completo: se puede guardar en un archivo independiente y ejecutar desde una terminal. Por ejemplo, guardar este primero como `secuencial.py`:
+**Concurrencia** significa organizar varias operaciones para que progresen durante un mismo intervalo. Pueden alternarse en un solo hilo: una avanza hasta que necesita esperar, otra aprovecha ese tiempo y la primera continúa cuando dispone de lo que esperaba.
 
-```python
-import time
+**Paralelismo** significa ejecutar trabajo simultáneamente, por ejemplo, repartir dos cálculos entre dos núcleos. La concurrencia no exige ese reparto físico: varias consultas pueden estar pendientes a la vez aunque el código que las coordina se ejecute en un mismo hilo.
 
-def consultar(nombre):
-    print("Inicio:", nombre)
-    time.sleep(0.2)
-    print("Fin:", nombre)
-    return f"datos de {nombre}"
+**Asincronía** es una forma de expresar operaciones cuyo resultado puede llegar más adelante. En Python, `asyncio` coordina corrutinas que pueden suspenderse durante una espera y reanudarse después. Permite hacer trabajo concurrente, pero declarar una función como asíncrona no convierte automáticamente sus instrucciones en trabajo paralelo.
 
-inicio = time.perf_counter()
-resultados = []
-for nombre in ["usuarios", "pedidos", "productos"]:
-    resultados.append(consultar(nombre))
+Si tres consultas independientes esperan un segundo cada una, ejecutarlas en secuencia acumula unos tres segundos de espera. Si sus esperas se solapan, el conjunto puede aproximarse a un segundo, más la coordinación. La mejora procede de aprovechar el tiempo de espera, no de calcular tres veces más deprisa.
 
-print(resultados)
-print(f"Tiempo: {time.perf_counter() - inicio:.2f} s")
-```
+## Trabajo de entrada y salida y trabajo de CPU
 
-Ejecutarlo con:
+Un trabajo está limitado por **entrada y salida**, o I/O, cuando pasa gran parte de su tiempo esperando datos: una respuesta HTTP, una consulta a una base de datos o información de un dispositivo. Mientras la respuesta no está disponible, realizar más cálculos no hace que llegue antes.
 
-```bash
-python secuencial.py
-```
+Un trabajo está limitado por **CPU** cuando ocupa el tiempo ejecutando instrucciones: recorrer muchos elementos, transformar datos o calcular un resultado numérico. Para terminar antes necesita reducir ese trabajo o disponer de más capacidad de ejecución.
 
-La salida será parecida a esta:
+La diferencia determina qué puede aportar la concurrencia. Solapar esperas suele mejorar un lote de consultas independientes. Intercalar dos cálculos dentro de un único hilo no proporciona otro núcleo ni elimina las instrucciones que deben ejecutarse.
 
-```text
-Inicio: usuarios
-Fin: usuarios
-Inicio: pedidos
-Fin: pedidos
-Inicio: productos
-Fin: productos
-['datos de usuarios', 'datos de pedidos', 'datos de productos']
-Tiempo: 0.60 s
-```
+Una misma aplicación puede tener ambas fases. Descargar información consume tiempo de red; procesar lo descargado puede consumir CPU. Conviene distinguirlas porque la solución adecuada para una fase puede no ayudar a la siguiente.
 
-`time.sleep(0.2)` representa una espera de 200 milisegundos. Aquí no hay una petición HTTP real: se simula su latencia para estudiar el orden de ejecución. La función devuelve un texto que permite identificar qué consulta produjo cada resultado.
+## Corrutinas y async def
 
-`time.perf_counter()` mide tiempo transcurrido. Restar la lectura inicial a la final permite medir el lote completo; `:.2f` muestra dos decimales. Los tiempos son aproximados y dependen del entorno.
+Una función declarada con **`async def`** es una función corrutina. Su cuerpo puede contener operaciones con `await`, que permiten esperar resultados sin mantener ocupado el hilo durante toda la espera.
 
-El `for` ejecuta tres llamadas completas. Como cada una tarda unos 0,2 segundos, el lote tarda unos 0,6 segundos. Esta será la referencia para entender qué cambia al introducir asincronía.
-
-## 2. Definir una corrutina con async def
-
-Una función declarada con **`async def`** es una función corrutina. Al llamarla se crea un objeto que representa una ejecución pendiente. Su cuerpo no se ejecuta únicamente por haber hecho esa llamada: hay que esperarla o programarla como tarea.
-
-Guardar este segundo programa en otro archivo, por ejemplo `corrutina.py`:
+Una consulta simplificada permite fijarse en ese flujo:
 
 ```python
 import asyncio
 
 async def consultar(nombre):
-    print("Inicio:", nombre)
-    await asyncio.sleep(0.2)
-    print("Fin:", nombre)
+    await asyncio.sleep(1)
     return f"datos de {nombre}"
-
-async def main():
-    corrutina = consultar("usuarios")
-    print("Corrutina creada")
-    resultado = await corrutina
-    print("Resultado:", resultado)
-
-asyncio.run(main())
 ```
 
-Su salida muestra en qué momento comienza realmente el cuerpo:
+`nombre` identifica el recurso solicitado. `asyncio.sleep(1)` representa una espera de un segundo; no envía una petición de red. Al terminar esa espera, la función devuelve un texto con el recurso correspondiente. Esta misma función sirve como referencia en los fragmentos siguientes.
 
-```text
-Corrutina creada
-Inicio: usuarios
-Fin: usuarios
-Resultado: datos de usuarios
-```
+Llamar a `consultar("usuarios")` **crea un objeto corrutina**. Esa llamada, por sí sola, no ejecuta el cuerpo hasta obtener el resultado. El objeto describe una ejecución que todavía debe esperarse o programarse.
 
-`consultar("usuarios")` crea el objeto guardado en `corrutina`. Después se imprime `Corrutina creada`. Al llegar a **`await corrutina`**, `main()` necesita su resultado y comienza a ejecutarse la consulta.
+Esta diferencia también existe en los tipos de objetos: la función es la definición reutilizable; la corrutina es una ejecución concreta de esa definición. Para realizar una nueva consulta se crea otra corrutina llamando otra vez a la función. Una corrutina que ya terminó no se puede reutilizar como si fuera una ejecución nueva.
 
-Dentro de la consulta, `await asyncio.sleep(0.2)` suspende esa ejecución durante la espera. Al poder continuar, se imprime `Fin` y se devuelve el texto. Ese valor es el que recibe `resultado`.
+## Qué significa await
 
-**`asyncio.run(main())`** prepara el bucle de eventos, ejecuta la corrutina principal y cierra el bucle al terminar. Es la entrada del programa asíncrono desde un archivo normal. Dentro de Jupyter ya existe un bucle en ejecución: se utiliza `await main()` en lugar de esa última línea.
-
-Crear una corrutina y olvidarla no ejecuta la operación. Además, una misma corrutina ya consumida no se puede reutilizar como una ejecución nueva: para repetir la consulta hay que volver a llamar a `consultar(...)`.
-
-## 3. Distinguir await de concurrencia
-
-`await` significa que la operación actual necesita esperar un resultado. **No crea por sí solo varias operaciones concurrentes**. Este programa sigue consultando los recursos uno después de otro:
+**`await`** expresa que la operación actual necesita el resultado de otra operación asíncrona para continuar. Dentro de una corrutina, estas dos líneas mantienen un orden secuencial:
 
 ```python
-import asyncio
-import time
-
-async def consultar(nombre):
-    print("Inicio:", nombre)
-    await asyncio.sleep(0.2)
-    print("Fin:", nombre)
-    return f"datos de {nombre}"
-
-async def main():
-    inicio = time.perf_counter()
-    resultados = []
-    for nombre in ["usuarios", "pedidos", "productos"]:
-        resultados.append(await consultar(nombre))
-    print(resultados)
-    print(f"Tiempo: {time.perf_counter() - inicio:.2f} s")
-
-asyncio.run(main())
+usuarios = await consultar("usuarios")
+pedidos = await consultar("pedidos")
 ```
 
-La secuencia vuelve a ser `Inicio usuarios → Fin usuarios → Inicio pedidos`. El tiempo sigue rondando los 0,6 segundos.
+La primera consulta comienza y llega a su espera. La corrutina que la llamó queda pendiente de su resultado; todavía no ha alcanzado la segunda línea. Cuando recibe los datos de usuarios, los asigna a `usuarios` y entonces empieza la consulta de pedidos.
 
-En la primera iteración, `main()` espera a que termine la consulta de usuarios. La llamada de pedidos todavía no se ha realizado. Aunque durante la espera el bucle podría atender otra tarea, este programa no ha programado ninguna otra consulta que pueda aprovecharla.
+Aunque las dos funciones sean asíncronas, las esperas no se solapan: en ese fragmento se ha pedido completar una consulta antes de iniciar la siguiente. **Poder suspender una operación y organizar varias operaciones concurrentes son decisiones diferentes.**
 
-Esto permite separar dos preguntas: **¿una operación puede suspenderse?** y **¿se han organizado varias operaciones para que avancen de forma concurrente?** `async def` y `await` resuelven la primera parte; aún falta organizar el lote.
+El valor que produce la corrutina mediante `return` es el que entrega `await`. Si en lugar de devolver un valor termina con una excepción, esa excepción aparece al esperarla y puede gestionarse en el llamador.
 
-## 4. Solapar operaciones con gather
+`await` solo se utiliza en un contexto asíncrono. Tampoco significa necesariamente «dar paso a otra tarea»: si lo esperado ya está disponible, la ejecución puede continuar sin suspenderse.
 
-**`asyncio.gather()`** recibe varias operaciones, las programa para que puedan avanzar concurrentemente y espera a que estén disponibles sus resultados. Para comparar con el programa anterior:
+## El bucle de eventos
+
+El **bucle de eventos** organiza qué tareas pueden continuar. Mantiene las operaciones pendientes y atiende las que tienen trabajo disponible. Cuando una tarea llega a una espera que no puede resolverse inmediatamente, el bucle puede atender otra.
+
+Al suspender una corrutina se conserva su estado: las variables locales, el punto de ejecución y lo que está esperando. Cuando la espera se resuelve, puede continuar desde ese punto; no vuelve a empezar la función.
+
+En el hilo del bucle se ejecuta una tarea de Python cada vez. La alternancia es **cooperativa**: el bucle recupera el control cuando la tarea se suspende o termina. No interrumpe arbitrariamente un cálculo largo para dar un turno a otra corrutina.
+
+Esto explica por qué una tarea puede estar iniciada sin estar ejecutando instrucciones en ese instante. Puede estar esperando una respuesta, preparada para continuar o ya terminada. El bucle coordina esos estados; no convierte cada corrutina en un hilo del sistema.
+
+En la entrada de una aplicación, `asyncio.run(...)` prepara un bucle, ejecuta la corrutina principal y cierra el bucle al terminar. Dentro de una corrutina que ya se está ejecutando, la coordinación continúa mediante `await` y las APIs de tareas. Los entornos que mantienen un bucle activo, como Jupyter, tienen su propio contexto de ejecución asíncrona.
+
+## Programar tareas con create_task
+
+Una **`Task`** es el objeto con el que `asyncio` administra la ejecución de una corrutina. `asyncio.create_task()` la programa para que el bucle pueda atenderla y devuelve una referencia a esa tarea.
+
+Dentro de una corrutina, la diferencia respecto a las dos esperas secuenciales es programar ambas consultas antes de esperar sus resultados:
 
 ```python
-import asyncio
-import time
+usuarios = asyncio.create_task(consultar("usuarios"))
+pedidos = asyncio.create_task(consultar("pedidos"))
 
-async def consultar(nombre):
-    print("Inicio:", nombre)
-    await asyncio.sleep(0.2)
-    print("Fin:", nombre)
-    return f"datos de {nombre}"
-
-async def main():
-    inicio = time.perf_counter()
-    resultados = await asyncio.gather(
-        consultar("usuarios"),
-        consultar("pedidos"),
-        consultar("productos"),
-    )
-    print(resultados)
-    print(f"Tiempo: {time.perf_counter() - inicio:.2f} s")
-
-asyncio.run(main())
+resultado_usuarios = await usuarios
+resultado_pedidos = await pedidos
 ```
 
-Una salida habitual es:
+Al llegar a `await usuarios`, las dos tareas ya están programadas. Mientras usuarios espera, pedidos también puede avanzar hasta su propia espera. Esperar primero a usuarios no impide que pedidos termine antes.
 
-```text
-Inicio: usuarios
-Inicio: pedidos
-Inicio: productos
-Fin: usuarios
-Fin: pedidos
-Fin: productos
-['datos de usuarios', 'datos de pedidos', 'datos de productos']
-Tiempo: 0.20 s
-```
+Si pedidos ya terminó al alcanzar `await pedidos`, se recoge el resultado disponible. No se realiza una segunda consulta. Una tarea conserva el resultado o la excepción de la ejecución que administra.
 
-Las tres consultas alcanzan su espera sin que el programa exija terminar una antes de empezar la siguiente. Por eso sus esperas se solapan y el lote se aproxima a la duración de una consulta, más el coste de coordinación.
+Programar una tarea tampoco hace que el llamador espere automáticamente a que termine. La referencia permite observar su finalización: `await tarea` espera el resultado; `tarea.done()` indica si terminó; `tarea.result()` consulta el resultado inmediatamente y falla si todavía no está disponible.
 
-### Qué hace el bucle de eventos
+Crear una tarea y esperarla inmediatamente antes de crear la siguiente conserva la secuencia. El solapamiento procede de tener varias operaciones programadas y capaces de avanzar durante las esperas de las otras.
 
-El **bucle de eventos** atiende las tareas que pueden continuar. Cuando una llega a una espera pendiente, conserva su estado y puede atender otra. Al finalizar esa espera, la tarea vuelve a estar disponible para continuar desde donde se suspendió.
+## Agrupar resultados con gather
 
-En estos ejemplos, las tareas utilizan **un mismo hilo**. No están ejecutando tres bloques de Python simultáneamente; aprovechan el tiempo en que las otras esperan. Esta organización es **concurrencia**. Ejecutar instrucciones al mismo tiempo en varios núcleos sería **paralelismo**.
-
-### En qué orden llegan los resultados
-
-`gather()` devuelve una lista en el orden de sus argumentos. El primer elemento corresponde a usuarios, aunque esa consulta no sea la primera en terminar. Si una operación tarda más, cambia el orden de finalización, pero no la posición que ocupa su resultado en esa lista.
-
-El orden de los mensajes ayuda a interpretar la ejecución; la posición de los resultados expresa la relación entre entradas y salidas. Son dos cosas distintas. [Contrato de gather](https://docs.python.org/3.12/library/asyncio-task.html#asyncio.gather).
-
-## 5. Programar tareas con create_task
-
-Una **`Task`** es el objeto con el que `asyncio` administra la ejecución de una corrutina. **`asyncio.create_task()`** permite programarla y conservar una referencia mientras la operación principal continúa haciendo otras cosas.
+**`asyncio.gather()`** reúne varias operaciones y permite esperar sus resultados conjuntamente. Cuando recibe corrutinas, las programa como tareas:
 
 ```python
-import asyncio
-
-async def consultar(nombre, demora):
-    print("Inicio:", nombre)
-    await asyncio.sleep(demora)
-    print("Fin:", nombre)
-    return f"datos de {nombre}"
-
-async def main():
-    usuarios = asyncio.create_task(consultar("usuarios", 0.3))
-    pedidos = asyncio.create_task(consultar("pedidos", 0.1))
-    print("Consultas programadas")
-
-    await asyncio.sleep(0.05)
-    print("La tarea principal también continúa")
-
-    print("Resultado:", await usuarios)
-    print("Resultado:", await pedidos)
-
-asyncio.run(main())
+resultados = await asyncio.gather(
+    consultar("usuarios"),
+    consultar("pedidos"),
+    consultar("productos"),
+)
 ```
 
-Con el planificador habitual, primero se imprime `Consultas programadas`. Al llegar al primer `await asyncio.sleep(...)`, la tarea principal cede el control y el bucle puede empezar las consultas.
+Las tres consultas pueden alcanzar su espera sin exigir que termine una antes de iniciar la siguiente. Con la espera de un segundo de `consultar()`, las tres pausas pueden transcurrir durante el mismo intervalo.
 
-Pedidos tiene una demora de 0,1 segundos y usuarios, de 0,3. Por eso normalmente aparece `Fin: pedidos` antes que `Fin: usuarios`. Sin embargo, el programa imprime primero el resultado de usuarios porque lo espera primero. Esperar después la tarea de pedidos recoge el resultado que ya había calculado; **no ejecuta otra consulta**.
+`resultados` contiene `['datos de usuarios', 'datos de pedidos', 'datos de productos']`. **La lista mantiene el orden de los argumentos**, aunque una consulta termine antes que otra. La posición del resultado permite relacionarlo con la entrada que lo produjo.
 
-Si se escribiera `await asyncio.create_task(consultar(...))` en cada iteración de un `for`, se volvería a esperar una consulta antes de programar la siguiente. Para conseguir solapamiento, hay que programar las tareas antes de esperar a que termine cada una.
+El orden de finalización y el orden en que el llamador recibe la lista son dos cosas distintas. Si productos tarda menos que usuarios, puede terminar primero y seguir ocupando la tercera posición de la lista.
 
-Conservar referencias permite esperar sus resultados y observar sus errores. `tarea.done()` indica si terminó; `tarea.result()` consulta inmediatamente el resultado y falla si todavía no está listo. `await tarea` espera hasta que lo esté.
+`gather()` resulta útil cuando interesa reunir resultados independientes. El comportamiento ante un fallo también forma parte de su contrato y debe distinguirse de la cancelación coordinada que ofrece `TaskGroup`.
 
-## 6. Evitar llamadas que bloquean el bucle
+## Llamadas que bloquean el bucle
 
-Declarar una función con `async def` no transforma las llamadas síncronas que contiene. Si ejecuta `time.sleep(0.3)`, duerme el hilo del bucle. Durante ese intervalo tampoco pueden avanzar las otras tareas de ese hilo.
+Declarar una función con `async def` no transforma las llamadas síncronas que contiene. **`time.sleep(1)` bloquea el hilo que lo ejecuta** durante la pausa. Si ese hilo es el del bucle, las demás tareas tampoco pueden avanzar durante ese segundo.
 
-Cuando una biblioteca ofrece una operación asíncrona, se utiliza esa operación con `await`. Cuando solo ofrece una función síncrona de entrada y salida, **`asyncio.to_thread()`** permite ejecutarla en otro hilo y esperar su resultado sin bloquear el bucle.
+**`await asyncio.sleep(1)` suspende la corrutina** mientras transcurre la pausa y permite al bucle atender otras tareas. Las dos operaciones representan una espera, pero entregan el control de forma diferente.
+
+La misma distinción se aplica a una biblioteca de red. Una llamada HTTP síncrona puede mantener ocupado el hilo del bucle hasta recibir la respuesta. Escribir `async` delante de la función que la contiene no cambia el contrato de esa llamada.
+
+Cuando existe una API asíncrona, sus operaciones se esperan mediante `await`. Cuando solo existe una función síncrona de entrada y salida, puede delegarse en un hilo para integrar su resultado sin bloquear el bucle.
+
+Un cálculo largo sin puntos de suspensión produce el mismo problema de coordinación: el bucle no puede atender otras tareas, plazos o solicitudes de cancelación hasta recuperar el control.
+
+## Delegar una operación síncrona a un hilo
+
+**`asyncio.to_thread()`** permite ejecutar una función síncrona en otro hilo y esperar su resultado desde una corrutina. Una lectura de texto ilustra la relación entre ambas partes:
 
 ```python
-import asyncio
-import time
+from pathlib import Path
 
-def leer_datos():
-    time.sleep(0.3)  # Representa una operación síncrona que tarda en responder.
-    return "contenido recibido"
-
-async def consultar():
-    return await asyncio.to_thread(leer_datos)
-
-async def mostrar_latidos():
-    for numero in range(3):
-        print("Latido:", numero + 1)
-        await asyncio.sleep(0.1)
-
-async def main():
-    datos, _ = await asyncio.gather(consultar(), mostrar_latidos())
-    print("Resultado:", datos)
-
-asyncio.run(main())
+texto = await asyncio.to_thread(Path("datos.txt").read_text, encoding="utf-8")
 ```
 
-Los tres latidos se imprimen mientras la lectura está en curso. La tarea principal recibe `contenido recibido` cuando terminan las operaciones.
+`Path("datos.txt")` representa la ruta del archivo. Su método `read_text` es una función síncrona que abre el archivo y devuelve el contenido como texto. `encoding="utf-8"` se entrega a ese método para indicar cómo interpretar los bytes.
 
-En `to_thread(leer_datos)` se pasa **la función**, sin llamarla previamente. Escribir `to_thread(leer_datos())` ejecutaría la lectura antes de entrar en `to_thread`, bloqueando el hilo equivocado y pasando después su resultado como si fuera una función.
+Se pasa **el método sin llamarlo**: `read_text`, no `read_text()`. La ejecución de la lectura debe ocurrir en el hilo delegado. Llamarlo antes de pasarlo a `to_thread()` realizaría la lectura en el hilo del bucle y enviaría después su resultado donde se esperaba una función.
 
-Para observar la diferencia en este mismo ejemplo, se puede sustituir el cuerpo de `consultar()` por `return leer_datos()`. La lectura ocupará entonces el hilo del bucle: el primer latido aparecerá después de esa espera.
+Mientras la lectura está pendiente, la corrutina que hizo `await` espera, pero el bucle puede atender otras tareas. Cuando termina la función, su valor se entrega a `texto`; si falla, su excepción se propaga al esperar.
 
-Lo mismo ocurre con un bucle de cálculo largo que no ceda el control. La palabra `async` no evita el bloqueo. Tampoco toda expresión `await` garantiza una suspensión: si el resultado ya está disponible, la tarea puede continuar inmediatamente.
+Esto integra una operación bloqueante en un flujo asíncrono. No vuelve asíncrona internamente a la biblioteca ni hace que un cálculo de Python puro necesite menos instrucciones.
 
-## 7. Limitar consultas con un semáforo
+## Pools de hilos
 
-Programar mil consultas a la vez puede saturar una base de datos o agotar las conexiones de un servicio. Un **semáforo** mantiene un número de permisos y permite entrar en una sección a tantas tareas como permisos haya disponibles.
+Un **pool** mantiene trabajadores reutilizables y les entrega trabajos. `ThreadPoolExecutor` administra hilos, de modo que un lote de llamadas síncronas puede atenderse concurrentemente.
 
-En este programa hay cinco tareas, pero solo dos pueden estar dentro de la consulta simultáneamente:
+Para varias lecturas, `rutas` puede contener objetos `Path` correspondientes a los archivos de interés:
 
 ```python
-import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
-LIMITE = 2
-
-async def consultar(numero, semaforo):
-    async with semaforo:
-        print("Entra:", numero)
-        await asyncio.sleep(0.1)
-        print("Sale:", numero)
-        return numero
-
-async def main():
-    semaforo = asyncio.Semaphore(LIMITE)
-    resultados = await asyncio.gather(
-        *(consultar(numero, semaforo) for numero in range(5))
-    )
-    print("Resultados:", resultados)
-
-asyncio.run(main())
+with ThreadPoolExecutor(max_workers=2) as pool:
+    textos = list(pool.map(Path.read_text, rutas))
 ```
 
-Los mensajes muestran las tandas: entran 0 y 1; al liberarse permisos pueden entrar 2 y 3; finalmente entra 4. El resultado conserva el orden `[0, 1, 2, 3, 4]`.
+`Path` es la clase del apartado anterior. `pool.map()` llama a `Path.read_text` para cada ruta. `max_workers=2` permite que hasta dos trabajadores del pool ejecuten sus llamadas a la vez; si hay más trabajos, esperan a que quede un trabajador disponible.
 
-`async with semaforo` espera un permiso antes de ejecutar el bloque y lo libera al salir, incluso si se produce una excepción. En `gather`, el `*` expande las corrutinas generadas por el `for` para pasarlas como argumentos separados.
+`map()` entrega los resultados en el orden de las entradas. `list(...)` consume esos resultados y, si alguno todavía no está disponible, el llamador espera. Este fragmento corresponde a coordinación **síncrona**: no debe confundirse con esperar sin bloquear el hilo del bucle.
 
-Cambiar `LIMITE` a uno hace que solo una consulta atraviese esa sección cada vez. Aumentarlo a cinco permite atender las cinco esperas juntas. El límite controla la **simultaneidad**, no una cuota de peticiones por segundo.
+El bloque `with` cierra el executor al salir y, por defecto, espera a los trabajos pendientes. Reutilizar los trabajadores evita crear y destruir un hilo para cada operación.
 
-El semáforo limita las operaciones que entran, pero las cinco tareas siguen existiendo. Si el volumen es enorme, también será necesario limitar cuánto trabajo se crea o se mantiene pendiente; una cola acotada permite organizar esa parte.
+Los hilos comparten la memoria del proceso. Esto facilita acceder a los mismos objetos, pero obliga a coordinar las modificaciones compartidas. Que cada llamada se ejecute en un hilo distinto no protege automáticamente los datos.
 
-## 8. Poner un plazo y cerrar los recursos
+## Datos compartidos y condiciones de carrera
 
-Una consulta puede no responder a tiempo. **`asyncio.timeout()`**, disponible desde Python 3.11, permite establecer un plazo para un bloque asíncrono. Al agotarse, solicita cancelar la operación y entrega `TimeoutError` fuera del contexto.
+Una **condición de carrera** aparece cuando el resultado depende de una intercalación no controlada entre operaciones. También puede existir entre corrutinas de un único hilo si una modificación queda dividida por una suspensión.
+
+Si `contador` vale cero, una actualización separada en lectura, espera y escritura contiene ese punto de intercalación:
 
 ```python
-import asyncio
-
-async def consultar():
-    print("Abrir recurso")
-    try:
-        await asyncio.sleep(0.3)
-        print("Consulta terminada")
-        return "datos"
-    finally:
-        print("Cerrar recurso")
-
-async def main():
-    try:
-        async with asyncio.timeout(0.1):
-            datos = await consultar()
-        print("Resultado:", datos)
-    except TimeoutError:
-        print("Plazo agotado")
-
-asyncio.run(main())
+anterior = contador
+await asyncio.sleep(0)
+contador = anterior + 1
 ```
 
-Como la consulta necesita unos 0,3 segundos y solo se permiten 0,1, la salida será:
+La primera tarea lee cero y se suspende. La segunda puede leer también cero antes de que la primera escriba. Ambas calculan uno y lo guardan: se solicitaron dos incrementos, pero el valor final solo aumentó una vez.
 
-```text
-Abrir recurso
-Cerrar recurso
-Plazo agotado
-```
+`asyncio.sleep(0)` cede el control al bucle. Aquí hace explícita la suspensión que separa la lectura de la escritura. Una operación real también puede suspenderse al esperar una respuesta necesaria para completar una actualización.
 
-`finally` se ejecuta tanto al terminar normalmente como al salir por una excepción o una cancelación. En una aplicación real sería el lugar para devolver un permiso o cerrar un recurso adquirido. El mensaje de cierre aparece antes de que el llamador gestione el timeout.
-
-El `except TimeoutError` está fuera de `async with` porque el contexto transforma allí la cancelación que provocó su propio plazo. Cambiar el límite a `0.5` permite ver la terminación normal, el cierre y el resultado.
-
-### Qué significa cancelar una tarea
-
-`tarea.cancel()` solicita entregar **`asyncio.CancelledError`** a la corrutina en una oportunidad de cancelación. La tarea puede liberar recursos antes de finalizar. Si se captura esa excepción para registrar o limpiar algo, normalmente debe volver a lanzarse con `raise`.
-
-El bucle necesita recuperar el control para atender la cancelación y los plazos. Un cálculo bloqueante que no cede el hilo puede retrasarlos. Además, cancelar la espera de `to_thread()` no mata la función que ya se está ejecutando en su hilo: esa función necesita su propio mecanismo de parada si debe poder interrumpirse. [Timeouts y cancelación](https://docs.python.org/3.12/library/asyncio-task.html#timeouts).
-
-## 9. Coordinar fallos con TaskGroup
-
-Cuando varias tareas forman una misma operación, interesa que su ciclo de vida quede delimitado. **`asyncio.TaskGroup`** espera a las tareas creadas dentro del grupo. Si una falla con una excepción distinta de una cancelación, solicita cancelar a sus hermanas y espera a que se cierren.
+Un **lock** delimita una sección a la que solo puede entrar un participante cada vez. Un mismo `lock = asyncio.Lock()` compartido por las tareas permite proteger esa secuencia completa:
 
 ```python
-import asyncio
-
-async def consulta_lenta():
-    print("Inicio de la consulta lenta")
-    try:
-        await asyncio.sleep(0.3)
-        print("Consulta lenta terminada")
-    except asyncio.CancelledError:
-        print("Consulta lenta cancelada")
-        raise
-    finally:
-        print("Cerrar consulta lenta")
-
-async def consulta_fragil():
-    await asyncio.sleep(0.05)
-    raise ValueError("La respuesta no es válida")
-
-async def main():
-    try:
-        async with asyncio.TaskGroup() as grupo:
-            grupo.create_task(consulta_lenta())
-            grupo.create_task(consulta_fragil())
-    except* ValueError as errores:
-        print("Errores de validación:", len(errores.exceptions))
-
-asyncio.run(main())
+async with lock:
+    anterior = contador
+    await asyncio.sleep(0)
+    contador = anterior + 1
 ```
 
-La consulta frágil falla antes de que termine la lenta. El grupo cancela esta última, su `finally` cierra el recurso y después se gestionan los errores. La salida muestra:
+La segunda tarea espera a que la primera salga del bloque antes de leer el valor. Proteger únicamente la asignación final dejaría abierta la posibilidad de trabajar con una lectura desactualizada.
 
-```text
-Inicio de la consulta lenta
-Consulta lenta cancelada
-Cerrar consulta lenta
-Errores de validación: 1
-```
+En código real conviene evitar esperas innecesarias dentro de la sección protegida. Un incremento sin puntos de suspensión no presenta esta intercalación entre tareas del mismo bucle. `asyncio.Lock` coordina esas tareas; si los participantes son hilos del sistema, se utiliza una primitiva adecuada a hilos, como `threading.Lock`.
 
-Los fallos del grupo se entregan mediante un **`ExceptionGroup`**, que puede contener varias excepciones. `except* ValueError` selecciona las de ese tipo; `errores.exceptions` contiene las que se han recogido en ese subgrupo.
+## Semáforos y límites de simultaneidad
 
-`gather()` tiene otro contrato: con su configuración habitual propaga el primer fallo, pero no cancela automáticamente a las otras tareas por ese fallo. Con `return_exceptions=True`, espera y devuelve también las excepciones como elementos de su lista.
+Un lock concede acceso a un participante. Un **semáforo** administra varios permisos, lo que permite limitar cuántas operaciones entran simultáneamente en una sección.
 
-Si un fallo termina `main()` y cierra `asyncio.run()`, las tareas pendientes pueden cancelarse durante ese cierre. Esa cancelación del programa no debe confundirse con el comportamiento propio de `gather()`. [TaskGroup y gestión de errores](https://docs.python.org/3.12/library/asyncio-task.html#task-groups).
-
-## 10. Proteger datos compartidos
-
-Usar un solo hilo no elimina todas las condiciones de carrera. Si una tarea lee un valor, se suspende y lo escribe después, otra puede haber leído el mismo valor durante ese intervalo.
-
-Este programa fuerza una suspensión entre la lectura y la escritura de un contador:
+Con un semáforo compartido creado mediante `limite = asyncio.Semaphore(3)`, cada consulta puede delimitar su acceso al servicio:
 
 ```python
-import asyncio
-
-PROTEGER = False
-
-async def main():
-    contador = 0
-    lock = asyncio.Lock()
-
-    async def incrementar():
-        nonlocal contador
-        if PROTEGER:
-            async with lock:
-                anterior = contador
-                await asyncio.sleep(0)
-                contador = anterior + 1
-        else:
-            anterior = contador
-            await asyncio.sleep(0)
-            contador = anterior + 1
-
-    await asyncio.gather(incrementar(), incrementar())
-    print("Esperado: 2")
-    print("Obtenido:", contador)
-
-asyncio.run(main())
+async with limite:
+    respuesta = await consultar("usuarios")
 ```
 
-Con `PROTEGER = False`, ambas tareas leen cero antes de escribir. Cada una calcula `0 + 1` y el valor final queda en uno. `await asyncio.sleep(0)` permite atender otra tarea y hace visible esa intercalación.
+Hasta tres tareas pueden estar dentro de sus respectivos bloques. La siguiente espera a que se libere un permiso. `async with` lo adquiere antes de entrar y lo libera al salir, incluso si el bloque termina con una excepción.
 
-Con `PROTEGER = True`, **`asyncio.Lock()`** permite entrar a una sola tarea en el bloque protegido. La segunda lee el contador después de que la primera haya terminado su incremento y el resultado es dos.
+El semáforo debe compartirse entre las consultas cuyo acceso se quiere limitar. Crear uno diferente en cada tarea daría a cada una sus propios permisos y perdería el límite común.
 
-`nonlocal contador` indica que la asignación modifica la variable de `main()`, en lugar de crear otra variable local en `incrementar()`. El lock debe proteger la lectura y la escritura como una operación completa; proteger solo la última asignación dejaría la lectura desactualizada.
+La espera de una operación continúa dentro de la sección: mientras aguarda la respuesta, mantiene su permiso porque esa consulta sigue en curso. El límite protege el número de operaciones simultáneas, no solo las instrucciones que están utilizando CPU en ese instante.
 
-El `await` intermedio está puesto para enseñar la carrera. En código real conviene evitar esperas innecesarias dentro de una sección crítica. `asyncio.Lock` coordina corrutinas del bucle; para datos que también utilizan otros hilos se necesita la sincronización adecuada a esos hilos.
+Un límite de tres consultas simultáneas **no equivale a tres peticiones por segundo**. La cantidad de peticiones que terminan en un segundo depende de cuánto duren. Tampoco limita cuántas tareas se han creado y están esperando permiso; para acotar el trabajo pendiente puede utilizarse una cola.
 
-## 11. Limitar el trabajo pendiente con una cola
+## Colas y trabajo pendiente
 
-Una **cola** separa a quien produce trabajo de quien lo procesa. **`asyncio.Queue(maxsize=2)`** permite mantener dos elementos pendientes dentro de ella. Cuando se llena, `await cola.put(...)` suspende al productor hasta que un consumidor deje espacio.
+Una **cola** separa la producción de trabajos de su procesamiento. En `asyncio.Queue(maxsize=10)`, la capacidad permite mantener hasta diez elementos dentro de la cola.
+
+`await cola.put(trabajo)` añade un elemento. Si la cola está llena, suspende al productor hasta que exista espacio. Esto permite que el ritmo del consumidor frene al productor y evita acumular trabajo indefinidamente; esa relación se conoce como **backpressure**.
+
+El consumidor retira un elemento y confirma cuándo termina de atenderlo. En el siguiente fragmento, `procesar(trabajo)` representa la operación asíncrona encargada de ese trabajo:
 
 ```python
-import asyncio
-
-async def productor(cola):
-    for numero in range(4):
-        await cola.put(numero)
-        print("Encolado:", numero)
-    await cola.put(None)
-
-async def consumidor(cola):
-    while True:
-        numero = await cola.get()
-        try:
-            if numero is None:
-                return
-            await asyncio.sleep(0.1)
-            print("Procesado:", numero)
-        finally:
-            cola.task_done()
-
-async def main():
-    cola = asyncio.Queue(maxsize=2)
-    async with asyncio.TaskGroup() as grupo:
-        grupo.create_task(consumidor(cola))
-        await productor(cola)
-        await cola.join()
-    print("Todos los elementos procesados")
-
-asyncio.run(main())
+trabajo = await cola.get()
+try:
+    await procesar(trabajo)
+finally:
+    cola.task_done()
 ```
 
-El consumidor obtiene un elemento con `get()`. Mientras lo procesa, el productor puede llenar los puestos disponibles de la cola. Al estar llena, el productor espera: no puede seguir acumulando elementos sin límite. Esta presión del consumidor sobre el productor se conoce como **backpressure**.
+`get()` espera si no hay elementos y libera un puesto al retirar uno. `task_done()` confirma que se ha atendido un elemento retirado; no lo elimina de la cola, porque ya se había retirado con `get()`.
 
-`task_done()` confirma que se ha atendido un elemento retirado. `await cola.join()` espera a que todos los elementos colocados hayan recibido esa confirmación. Una cola vacía no basta para demostrarlo: el consumidor puede seguir trabajando con un elemento que ya retiró.
+`await cola.join()` espera a que todos los elementos añadidos reciban esa confirmación. Una cola vacía no demuestra que todo haya terminado: el consumidor puede estar procesando un elemento que ya retiró. Además, `join()` no sustituye al protocolo que indique cuándo el productor ha terminado de añadir trabajos.
 
-`None` es una señal de cierre porque los trabajos válidos del ejemplo son enteros. Se envía al acabar la producción para que el consumidor salga de su bucle. La señal también se confirma mediante `task_done()` en el `finally`. Con varios consumidores haría falta una señal por consumidor.
+La capacidad limita los elementos **dentro de la cola**, no los que ya se están procesando. Con diez pendientes y dos consumidores ocupados pueden existir doce trabajos sin terminar. El cierre de los consumidores también debe coordinarse; una señal de fin es una posibilidad cuando se distingue de los trabajos válidos.
 
-La capacidad limita los elementos **dentro de la cola**, no los que ya están procesándose. En este caso pueden existir dos pendientes y uno en manos del consumidor. [Colas de asyncio](https://docs.python.org/3.12/library/asyncio-queue.html).
+## Timeouts y cancelación
 
-## 12. Elegir entre asincronía, hilos y procesos
+Un **timeout** fija cuánto tiempo se está dispuesto a esperar una operación. `asyncio.timeout()`, disponible desde Python 3.11, aplica ese plazo a un bloque asíncrono:
 
-La elección parte del trabajo que ocupa el tiempo del programa. Si muchas operaciones esperan respuestas y ofrecen APIs asíncronas, `asyncio` permite coordinar esas esperas, limitar su simultaneidad y gestionar sus plazos.
+```python
+try:
+    async with asyncio.timeout(2):
+        respuesta = await consultar("usuarios")
+except TimeoutError:
+    respuesta = None
+```
 
-Si una biblioteca de entrada y salida es síncrona, se puede delegar esa llamada a un hilo mediante `to_thread()` o utilizar un pool de hilos. Un hilo puede avanzar mientras otro espera en una operación que permite hacerlo. Los hilos comparten la memoria del proceso y requieren coordinar el acceso a los datos compartidos.
+Si la consulta termina dentro del plazo, se conserva su resultado. Si el contexto agota los dos segundos, solicita la cancelación correspondiente y transforma esa cancelación en `TimeoutError` al salir. El `except` se coloca fuera del bloque porque la transformación ocurre en su salida. `None` representa aquí una decisión del llamador ante el fallo, no una respuesta recibida del servicio.
 
-Si domina un cálculo largo, convertirlo en una corrutina no proporciona más capacidad de CPU. Un pool de procesos puede repartir trabajos independientes entre núcleos; a cambio, hay costes de arranque y envío de datos. Cada proceso tiene su propia memoria e intérprete.
+**Cancelar una tarea es solicitar su finalización cooperativa.** `tarea.cancel()` provoca que se entregue `asyncio.CancelledError` en una oportunidad de cancelación. La corrutina puede ejecutar su limpieza antes de terminar; no se detiene cortando cualquier instrucción a mitad.
 
-En CPython con el GIL activado, varios hilos no ejecutan simultáneamente un mismo tipo de bucle de Python puro dentro del intérprete. Algunas bibliotecas nativas liberan el GIL y existen compilaciones sin él, por lo que hay que comprobar el entorno y el trabajo concreto antes de generalizar una medición.
+Los bloques `finally` y los gestores de contexto permiten cerrar recursos también durante la cancelación. Si se captura `CancelledError` para registrar o limpiar algo, normalmente debe propagarse de nuevo con `raise` para respetar esa solicitud.
 
-Una aplicación puede combinar los modelos: `asyncio` coordina sus consultas y delega una fase de cálculo en procesos. Lo esencial es distinguir **esperar**, **coordinar** y **calcular**, y elegir el recurso de ejecución que corresponda a cada parte.
+El bucle necesita recuperar el control para atender el plazo. Una llamada que bloquea su hilo puede retrasar tanto el timeout como la cancelación. Por eso un plazo asíncrono no corrige una operación bloqueante colocada en el lugar equivocado.
+
+Cancelar la espera de un trabajo delegado tampoco garantiza detener ese trabajo. Una función que ya se ejecuta en un hilo o un proceso puede continuar; necesita su propio mecanismo de parada cuando deba poder interrumpirse.
+
+## TaskGroup y errores de varias tareas
+
+Cuando varias tareas pertenecen a una misma operación, importa gestionar conjuntamente su duración y sus fallos. **`asyncio.TaskGroup`**, disponible desde Python 3.11, delimita un grupo de tareas y espera a que se cierren antes de salir de su contexto.
+
+```python
+async with asyncio.TaskGroup() as grupo:
+    usuarios = grupo.create_task(consultar("usuarios"))
+    pedidos = grupo.create_task(consultar("pedidos"))
+```
+
+Las tareas se crean mediante el grupo y pueden avanzar concurrentemente. Si el bloque termina correctamente, ambas han finalizado y sus referencias permiten recuperar los resultados. No quedan consultas del grupo continuando fuera de ese ámbito.
+
+Si una tarea falla con una excepción distinta de una cancelación, el grupo solicita cancelar las demás y espera a su limpieza. Los fallos se reúnen en un **`ExceptionGroup`**, que puede contener varias excepciones. La sintaxis `except* ValueError` permite gestionar las de ese tipo dentro del grupo de errores.
+
+`gather()` tiene otro comportamiento. Con su configuración habitual, propaga el primer fallo al llamador, pero ese fallo no cancela automáticamente las otras tareas. Con `return_exceptions=True`, espera a todas y coloca también sus excepciones como elementos de la lista de resultados.
+
+Por eso un resultado reunido con `gather()` no implica siempre éxito: si se solicitó devolver excepciones, hay que distinguirlas de los valores válidos. `TaskGroup` expresa mejor el caso en el que las tareas forman una unidad y el fallo de una debe provocar el cierre de las demás.
+
+Si una excepción acaba haciendo que termine la corrutina principal y se cierre `asyncio.run()`, ese cierre puede cancelar tareas pendientes. Esa cancelación del programa completo no debe confundirse con el contrato propio de `gather()`.
+
+## Procesos y trabajo de CPU
+
+Los hilos pertenecen a un mismo proceso y comparten memoria. Un **proceso** dispone de su propio intérprete y espacio de memoria. Un pool de procesos puede distribuir cálculos independientes entre varios núcleos.
+
+`ProcessPoolExecutor` utiliza una interfaz similar a la del pool de hilos. Si `calcular(limite)` representa una función de cálculo y `limites` contiene sus distintas entradas, la operación central es:
+
+```python
+from concurrent.futures import ProcessPoolExecutor
+
+with ProcessPoolExecutor(max_workers=2) as pool:
+    resultados = list(pool.map(calcular, limites))
+```
+
+`max_workers=2` limita el pool a dos procesos trabajadores. Los argumentos se envían a esos trabajadores y sus resultados vuelven al proceso llamador. `map()` conserva el orden de entrada, igual que en el executor de hilos.
+
+El coste incluye arrancar trabajadores y transportar datos. Un cálculo pequeño puede terminar antes en el proceso original. Aumentar trabajadores tampoco crea más núcleos disponibles ni elimina el tiempo dedicado a transferencias.
+
+En una aplicación que crea procesos, su arranque se protege con `if __name__ == "__main__":` para evitar que los trabajadores vuelvan a ejecutar ese arranque al importar el módulo. Las funciones enviadas deben poder importarse desde los trabajadores y sus argumentos y resultados deben poder serializarse. Esto explica por qué funciones locales, lambdas o definiciones de una sesión interactiva pueden resultar incompatibles con un pool de procesos.
+
+### Memoria del padre y del trabajador
+
+Enviar una lista a un trabajador no convierte esa lista normal en memoria compartida. Si el trabajador añade un elemento, modifica su propia representación. El padre necesita recibir explícitamente el resultado si le interesa esa modificación.
+
+`pool.submit(funcion, argumento)` envía un trabajo y devuelve un **`concurrent.futures.Future`**. En código síncrono, `futuro.result()` espera a que termine y recupera el valor devuelto, o propaga la excepción. Recibir una lista modificada como resultado no significa que la lista original del padre haya cambiado.
+
+Existen mecanismos explícitos de comunicación y memoria compartida entre procesos, pero tienen sus propios contratos. No debe suponerse que un objeto normal conserva la identidad y las modificaciones compartidas que tendría entre hilos.
+
+## GIL y elección del modelo
+
+En **CPython con el GIL activado**, varios hilos no ejecutan simultáneamente bytecode de Python dentro del mismo intérprete. Los hilos siguen siendo útiles cuando una operación libera esa limitación mientras espera entrada y salida.
+
+Algunas bibliotecas nativas liberan el GIL durante sus cálculos y existen compilaciones de CPython sin él. Por eso hay que relacionar la elección con el intérprete y las operaciones reales, en lugar de concluir que todos los cálculos se comportan igual con hilos.
+
+Cuando predominan esperas y las bibliotecas proporcionan APIs asíncronas, `asyncio` permite coordinarlas en un bucle, con plazos y límites explícitos. Cuando la biblioteca de entrada y salida es síncrona, un pool de hilos puede atender varias llamadas y `to_thread()` permite integrarlas en una aplicación asíncrona.
+
+Cuando predominan cálculos independientes de Python puro, los procesos permiten repartirlos entre intérpretes y núcleos, con el coste de arranque y transporte. Si los cálculos dependen estrechamente unos de otros, ese reparto puede ser poco útil o introducir demasiada comunicación.
+
+Una aplicación también puede combinar los modelos. Un bucle puede coordinar la red y esperar un cálculo delegado a un pool de procesos. `bucle.run_in_executor(pool, calcular, limite)` envía ese trabajo y devuelve un futuro compatible con `await`; `bucle` se obtiene con `asyncio.get_running_loop()` dentro de la ejecución asíncrona.
+
+La mejora final depende de cuánto trabajo pueda solaparse o repartirse. La parte secuencial permanece, la consulta más lenta puede determinar el final del lote y el exceso de trabajadores puede saturar conexiones, memoria o servicios. Entender dónde se consume el tiempo permite elegir el modelo sin atribuirle mejoras que no puede producir.
 
 ## Referencias
 
-La documentación oficial desarrolla los contratos utilizados: [corrutinas y tareas](https://docs.python.org/3.12/library/asyncio-task.html), [locks y semáforos](https://docs.python.org/3.12/library/asyncio-sync.html), [colas](https://docs.python.org/3.12/library/asyncio-queue.html) y [executors de hilos y procesos](https://docs.python.org/3.12/library/concurrent.futures.html).
+Documentación oficial: [corrutinas, tareas y cancelación](https://docs.python.org/3.12/library/asyncio-task.html), [locks y semáforos](https://docs.python.org/3.12/library/asyncio-sync.html), [colas](https://docs.python.org/3.12/library/asyncio-queue.html), [executors de hilos y procesos](https://docs.python.org/3.12/library/concurrent.futures.html) y [trabajo delegado desde el bucle](https://docs.python.org/3.12/library/asyncio-eventloop.html#asyncio.loop.run_in_executor).
 
-El artículo [Python Concurrency de Real Python](https://realpython.com/python-concurrency/) amplía la comparación entre modelos de concurrencia. Esta guía utiliza explicaciones propias y ejemplos pequeños para seguir el flujo de ejecución y entender la función de cada operación.
+El artículo [Python Concurrency de Real Python](https://realpython.com/python-concurrency/) desarrolla la comparación entre concurrencia, hilos, procesos y asincronía.

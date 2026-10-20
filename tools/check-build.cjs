@@ -155,7 +155,6 @@ assert(
 assert(fs.existsSync(path.join(output, 'js/learning.js')));
 const pythonGuide = fs.readFileSync(path.join(output, 'python-asincronia.html'), 'utf8');
 assert(!/data-python-demo|python-labs|python-worker|pyodide/i.test(pythonGuide));
-assert.equal((pythonGuide.match(/<code class="[^"]*language-python/g) || []).length, 11);
 assert(/<h1\b[^>]*>Asincronía<\/h1>/.test(pythonGuide));
 assert(pythonGuide.includes('href="/custom/"'));
 assert(

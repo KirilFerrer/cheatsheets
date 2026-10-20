@@ -36,10 +36,13 @@ Custom follows the same token ownership model: runtime CSS is canonical and this
 document records its accepted values (Model B). `.learning-custom` maps accent,
 tint and focus to `#0f766e`, `#ccfbf1`, `#0d9488` in light mode and `#5eead4`,
 `#123a39`, `#2dd4bf` in dark mode. Its catalogue cards use teal-700 to cyan-900.
-Asincronía follows the shared reading layout: introduce each concept, show a
-complete runnable Python program, then explain its output and execution order.
-Use Python 3.11+ standard-library examples with no in-page execution panels,
-runtime downloads or charts. Keep normal code copying and the reading index.
+Asincronía is explanatory study material in the shared reading layout. Develop
+each concept in prose and use short code fragments only to clarify a specific
+operation or execution relationship. Explain the names and context each fragment
+relies on. Do not include complete programs, file-creation or execution walkthroughs,
+exercises, laboratories, in-page execution panels, runtime downloads or charts.
+Keep normal code copying and the reading index. The reader practices independently;
+the guide does not prescribe activities.
 
 Catalogue panels and card hover effects animate only opacity and transforms.
 Use a dimmed backdrop without blur and pause the home decorations while a topic

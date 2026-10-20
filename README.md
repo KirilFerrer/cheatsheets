@@ -13,7 +13,7 @@ y la creación de actas a partir de audio.
 
 **Custom** reúne conceptos específicos de programación. Su primer apartado,
 **Asincronía**, desarrolla corrutinas, tareas, esperas, sincronización y cancelación
-con explicaciones paso a paso, programas completos y resultados comentados.
+con explicaciones didácticas y fragmentos breves de código integrados en el texto.
 
 **Web:** https://app.sheet-codes.workers.dev
 
@@ -43,11 +43,11 @@ a `/python-asincronia.html`. La colección también tiene un índice en
 `heading` y un `menu_title` corto. La portada y el índice incorporan esos posts;
 actualiza también las rutas esperadas de las comprobaciones.
 
-La guía de asincronía sigue la misma plantilla de lectura que las demás: cada
-concepto se explica antes de su código y después se interpreta el resultado.
-Los programas se pueden copiar y ejecutar con Python 3.11 o posterior; utilizan
-solo la biblioteca estándar. El contenido se lee sin cargar un intérprete ni
-mostrar controles de ejecución en la web.
+La guía de asincronía sigue la misma plantilla de lectura que las demás. Desarrolla
+los conceptos y utiliza fragmentos breves para explicar operaciones concretas y
+su efecto. No contiene programas completos, instrucciones para crear y ejecutar
+archivos, ejercicios ni laboratorios. Tampoco carga un intérprete o muestra
+controles de ejecución en la web.
 
 Las guías usan `learning-page-cards`. `disableNunjucks: true` permite explicar templates Django
 sin que Hexo intente ejecutar su sintaxis. El índice se genera a partir de los
@@ -59,18 +59,15 @@ encabezados del documento.
 npm run lint:check
 npm run build
 npm run test:build
-npm run test:python
 ```
 
 La comprobación exige exactamente las nueve rutas y sus opciones de menú,
 estilos de lectura consistentes, todos los encabezados renderizados y enlaces
 internos válidos. Los cambios de interfaz requieren además comprobar búsqueda,
 menús, copia de código, navegación con teclado y pantallas estrechas.
-`test:python` ejecuta los programas extraídos de la propia guía y comprueba sus
-resultados, incluida la diferencia entre un contador protegido y sin proteger.
 
-Los ejemplos explican en qué terminal, archivo o intérprete se ejecutan.
-Cada guía indica sus requisitos y explica las funciones y parámetros que introduce.
+Cada guía explica el contexto de sus fragmentos, las funciones y los parámetros
+que introduce.
 Las referencias oficiales complementan el contenido. Los temas especializados
 se incorporarán gradualmente; no hay ejercicios ni laboratorios descargables.
 
