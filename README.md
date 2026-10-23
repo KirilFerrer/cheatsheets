@@ -52,8 +52,10 @@ su efecto. No contiene programas completos, instrucciones para crear y ejecutar
 archivos, ejercicios ni laboratorios. Tampoco carga un intérprete o muestra
 controles de ejecución en la web.
 
-La interfaz toma como referencia el proyecto Sistemas agénticos: biblioteca lateral,
-artículo continuo e índice derecho que se pliega en pantallas pequeñas. Conserva
+La interfaz toma como referencia el proyecto Sistemas agénticos: artículo continuo
+e índice derecho que se pliega en pantallas pequeñas. Los temas se eligen desde la
+portada, con categorías y tarjetas de color, sin menú general lateral. Los submenús
+se cierran al pulsar fuera o con Escape y devuelven el foco a su tarjeta. Conserva
 los temas claro y oscuro, los cuatro menús de tecnologías, la búsqueda con
 previsualización, compartir y copiar código.
 

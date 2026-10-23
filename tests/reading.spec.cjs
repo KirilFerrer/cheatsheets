@@ -20,7 +20,7 @@ async function accessible(page) {
   ).toEqual([]);
 }
 
-test('every guide preserves its content, active navigation, contrast and viewport', async ({
+test('every guide preserves its content, article index, contrast and viewport', async ({
   page
 }) => {
   const errors = [];
@@ -29,32 +29,50 @@ test('every guide preserves its content, active navigation, contrast and viewpor
     await page.goto(guide.path);
     await expect(page.locator('main h1')).toBeVisible();
     await expect(page.locator('.learning-on-page nav a')).toHaveCount(guide.sections.length);
-    await expect(page.locator(`.study-navigation a[href="${guide.path}"]`)).toHaveAttribute(
-      'aria-current',
-      'page'
-    );
+    await expect(page.locator('.study-sidebar, .study-navigation')).toHaveCount(0);
+    await expect(page.locator('.learning-breadcrumb a[href="/"]')).toBeVisible();
     await noOverflow(page);
     await accessible(page);
   }
   expect(errors).toEqual([]);
 });
 
-test('catalogue menus retain all options, keyboard close and focus restoration', async ({
+test('catalogue menus close outside or with Escape and restore focus without a close button', async ({
   page
 }) => {
   await page.goto('/');
+  await expect(page.locator('.study-sidebar, .study-navigation')).toHaveCount(0);
+  await noOverflow(page);
   await accessible(page);
   for (const id of ['docker', 'django', 'redis', 'llm']) {
     const trigger = page.locator(`[data-series-trigger="${id}"]`);
     await trigger.click();
     const dialog = page.locator(`#series-${id}`);
     await expect(dialog).toBeVisible();
+    await expect(dialog.locator('button')).toHaveCount(0);
     await expect(dialog.locator('.series-options a').first()).toBeFocused();
     await accessible(page);
+    await page.keyboard.press('Shift+Tab');
+    await expect(dialog.locator('.series-options a').last()).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(dialog.locator('.series-options a').first()).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(dialog).not.toBeVisible();
     await expect(trigger).toBeFocused();
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    await trigger.click();
+    await dialog.locator('h2').click();
+    await expect(dialog).toBeVisible();
+    await page.mouse.click(4, 4);
+    await expect(dialog).not.toBeVisible();
+    await expect(trigger).toBeFocused();
   }
+  await page.locator('[data-series-trigger="docker"]').click();
+  await page.locator('#series-docker a[href="/docker-dockerfile.html"]').click();
+  await expect(page).toHaveURL(/docker-dockerfile/);
+  await page.goBack();
+  await expect(page.locator('dialog.series-dialog[open]')).toHaveCount(0);
+  await expect(page.locator('html')).not.toHaveClass(/series-is-open/);
   await page.locator('.catalogue-grid a[href="/sistemas-agenticos.html"]').click();
   await expect(page).toHaveURL(/sistemas-agenticos/);
   await page.goto('/custom/');
@@ -169,15 +187,15 @@ test('code copying and its error fallback give accessible feedback', async ({ pa
   expect(await page.evaluate(() => window.getSelection().toString())).toContain('call_1');
 });
 
-test('share actions and mobile navigation remain reachable', async ({ page }) => {
+test('share actions and navigation through the homepage remain reachable', async ({ page }) => {
   await page.goto('/sistemas-agenticos.html');
   await page.locator('#share-trigger').click();
   await expect(page.getByRole('button', { name: 'Copiar enlace', exact: true })).toBeVisible();
   await accessible(page);
   await page.keyboard.press('Escape');
   await expect(page.locator('#share-trigger')).toBeFocused();
-  const nav = page.locator('.study-navigation');
-  if (!(await nav.evaluate((el) => el.open))) await nav.locator('summary').click();
-  await page.locator('.study-navigation a[href="/python-asincronia.html"]').click();
+  await page.getByRole('link', { name: 'Sheet Codes · Inicio' }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await page.locator('.catalogue a[href="/python-asincronia.html"]').click();
   await expect(page.locator('main h1')).toHaveText('Asincronía');
 });

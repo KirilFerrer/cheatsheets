@@ -3,7 +3,6 @@
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const resetDialogs = [];
   document.querySelectorAll('.series-dialog').forEach((dialog) => {
-    dialog.querySelector('[data-close-series]')?.addEventListener('click', () => dialog.close());
     let opener;
     let restoring = false;
     if (typeof dialog.showModal !== 'function') return;
@@ -67,11 +66,21 @@
       }
     });
     let pointerStartedOutside = false;
+    const outsidePanel = (event) => {
+      const bounds = dialog.getBoundingClientRect();
+      return (
+        event.clientX < bounds.left ||
+        event.clientX > bounds.right ||
+        event.clientY < bounds.top ||
+        event.clientY > bounds.bottom
+      );
+    };
     dialog.addEventListener('pointerdown', (event) => {
-      pointerStartedOutside = event.target === dialog;
+      pointerStartedOutside = event.target === dialog && outsidePanel(event);
     });
     dialog.addEventListener('click', (event) => {
-      if (event.target === dialog && pointerStartedOutside) dialog.close();
+      if (event.target === dialog && pointerStartedOutside && outsidePanel(event)) dialog.close();
+      pointerStartedOutside = false;
     });
     dialog.addEventListener('close', () => {
       document.documentElement.classList.remove('series-is-open');
@@ -93,12 +102,9 @@
 
   // Clear transient catalogue UI before it enters the back/forward cache.
   const resetCatalogue = () => {
-    if (!document.querySelector('section.home')) return;
+    if (!document.querySelector('section.catalogue')) return;
     resetDialogs.forEach((reset) => reset());
     document.documentElement.classList.remove('series-is-open');
-    document.querySelectorAll('.home details[open]').forEach((details) => {
-      details.open = false;
-    });
     window.search?.closeModal(true);
     const url = new URL(window.location.href);
     if (url.searchParams.has('q')) {
@@ -114,14 +120,6 @@
   });
 
   // Long-form guides keep copy actions visible for touch and keyboard users.
-  const navigation = document.querySelector('.study-navigation');
-  const mobile = window.matchMedia('(max-width: 760px)');
-  const updateNavigation = () => {
-    if (navigation) navigation.open = !mobile.matches;
-  };
-  updateNavigation();
-  mobile.addEventListener('change', updateNavigation);
-
   const article = document.querySelector('.learning-content');
   if (!article) return;
 

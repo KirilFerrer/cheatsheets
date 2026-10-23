@@ -1,4 +1,4 @@
-// One catalogue supplies the homepage, topic dialogs and persistent navigation.
+// One catalogue supplies the homepage, topic dialogs and Custom index.
 hexo.extend.helper.register('study_catalogue', function () {
   const posts = this.site.posts.toArray().filter((post) => post.layout === 'learning');
   const find = (slug, label) => {
@@ -11,7 +11,6 @@ hexo.extend.helper.register('study_catalogue', function () {
       title: 'Docker',
       category: 'Toolkit',
       icon: 'docker',
-      description: 'Contenedores, imágenes y servicios.',
       items: [
         ['docker', 'Base'],
         ['docker-dockerfile', 'Dockerfile'],
@@ -23,7 +22,6 @@ hexo.extend.helper.register('study_catalogue', function () {
       title: 'Django',
       category: 'Python',
       icon: 'django',
-      description: 'Del request a una aplicación web.',
       items: [['django', 'Base']]
     },
     {
@@ -31,7 +29,6 @@ hexo.extend.helper.register('study_catalogue', function () {
       title: 'Redis',
       category: 'Database',
       icon: 'redis',
-      description: 'Datos en memoria y caché.',
       items: [['redis', 'Base']]
     },
     {
@@ -39,7 +36,6 @@ hexo.extend.helper.register('study_catalogue', function () {
       title: 'LLM Engineering',
       category: 'AI',
       icon: 'ai',
-      description: 'Modelos, herramientas e inferencia.',
       items: [
         ['llm-week-1', 'Week 1'],
         ['llm-week-2', 'Week 2'],

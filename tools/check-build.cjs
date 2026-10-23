@@ -144,6 +144,10 @@ for (const [family, options] of Object.entries(catalogue)) {
     match[0].includes(`id="series-${family}"`)
   )?.[0];
   assert(dialog, `Missing topic menu: ${family}`);
+  assert(
+    !dialog.includes('<button'),
+    `Topic menus must close through backdrop or Escape: ${family}`
+  );
   const links = [...dialog.matchAll(/<a\b[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g)];
   assert.deepEqual(
     links.map((link) => [link[1], stripHTML(link[2]).trim()]),
@@ -163,13 +167,17 @@ assert(
   fs.readFileSync(path.join(output, 'css/learning.css'), 'utf8').includes('.learning-page-cards')
 );
 assert(fs.existsSync(path.join(output, 'js/learning.js')));
-for (const slug of expected) {
-  const html = fs.readFileSync(path.join(output, `${slug}.html`), 'utf8');
-  assert(html.includes('study-navigation'), `Missing shared navigation: ${slug}`);
+for (const route of [
+  'index.html',
+  'custom/index.html',
+  ...expected.map((slug) => `${slug}.html`)
+]) {
+  const html = fs.readFileSync(path.join(output, route), 'utf8');
   assert(
-    html.includes(`href="/${slug}.html" aria-current="page"`),
-    `Missing active guide: ${slug}`
+    !/study-sidebar|study-navigation|Explorar apuntes/.test(html),
+    `Redundant library menu: ${route}`
   );
+  assert(html.includes('aria-label="Sheet Codes · Inicio"'), `Missing homepage link: ${route}`);
 }
 const agentGuide = fs.readFileSync(path.join(output, 'sistemas-agenticos.html'), 'utf8');
 assert(agentGuide.includes('href="/custom/"'));

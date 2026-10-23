@@ -32,15 +32,17 @@ omitted:
 
 Biblioteca de apuntes técnicos en español. La revisión del 23/10/2026 adopta,
 por petición del usuario, la UI y UX del proyecto local `plataformas-agenticas`:
-navegación lateral estable, lectura continua y un índice del artículo a la derecha.
-Mantiene las funcionalidades de consulta de Sheet Codes y sus temas claro y oscuro.
-La firma es la organización de un cuaderno de programación: tema a la izquierda,
-explicación en el centro, apartados a la derecha. Sin portada comercial ni animación ambiental.
+lectura continua e índice del artículo a la derecha. La revisión posterior del usuario
+conserva esa estética y recupera una portada más visual: categorías separadas y tarjetas
+de color con iconos y subtemas visibles. La selección de temas pertenece a la portada;
+no hay un menú general lateral, tampoco en móvil. El logotipo y las migas llevan al inicio.
+Mantiene las funcionalidades de consulta y los temas claro y oscuro, sin portada comercial
+ni animación ambiental.
 
 Se ofrecen diez guías en seis temas. Custom contiene Asincronía y Sistemas agénticos,
 con enlaces directos. Docker, Django, Redis y LLM Engineering conservan sus cuatro
 menús de temas. `study_catalogue()` en `themes/coo/scripts/study-catalogue.js` es el
-propietario común del catálogo, los diálogos y la navegación. Custom deriva de los
+propietario común del catálogo, los diálogos y el índice Custom. Custom deriva de los
 posts de esa categoría, ordenados por título en español.
 
 ## Colors
@@ -68,6 +70,18 @@ Las variantes por tema conservan su semántica en ambos modos:
 | Custom          | `#0f766e` / `#ccfbf1` / `#0d9488`  | `#5eead4` / `#123a39` / `#2dd4bf`   |
 
 Docker utiliza el azul global. El color acompaña a nombres y estados accesibles.
+Las tarjetas de temas comparten `--topic-start`, `--topic-end` y `--topic-text` en
+`learning.css`. El degradado corto identifica la tecnología; el texto blanco tiene
+contraste en ambos extremos. La misma tarjeta se usa en portada, Custom y submenús.
+
+| Tema            | Inicio    | Final     |
+| --------------- | --------- | --------- |
+| Docker          | `#175fc5` | `#16499d` |
+| Django          | `#08785e` | `#075c49` |
+| Redis           | `#c43747` | `#962c44` |
+| LLM Engineering | `#713bbc` | `#50319b` |
+| Custom          | `#0b7b80` | `#0b5965` |
+
 El tema se inicializa antes de pintar usando `localStorage.theme` o la preferencia
 del sistema. Un fallo de almacenamiento permite cambiarlo durante la visita.
 Los colores forzados y la preferencia de movimiento reducido tienen prioridad.
@@ -83,14 +97,17 @@ llevan el desarrollo; las listas sirven para pasos o comparaciones concretas.
 
 ## Layout
 
-Cabecera sticky de 64 px reservados. Navegación de biblioteca de 244 px (224 px en
-portátil). Documento como propietario del scroll vertical; sidebar e índice con
-scroll acotado. Contenido de hasta 1180 px con padding de 44 px. Índice derecho
-de 190 px separado por 40 px. A 1200 px el índice se convierte en un disclosure
-antes del artículo. A 760 px también se pliega la biblioteca en el flujo.
-Ambos disclosures funcionan sin JavaScript; la mejora responsive los cierra en móvil.
+Cabecera sticky de 64 px reservados. Documento como propietario del scroll vertical;
+el índice del artículo tiene scroll acotado. Contenido centrado de hasta 1180 px con
+padding de 44 px. Índice derecho de 190 px separado por 40 px. A 1200 px el índice
+se convierte en un disclosure antes del artículo. Funciona sin JavaScript; la mejora
+responsive lo cierra en móvil. Ningún espacio queda reservado a un menú general.
 
-El catálogo conserva sus categorías y menús en un espacio más compacto. Cada tema
+La portada tiene un máximo de 1120 px y dos columnas de categorías, con Custom ocupando
+la fila completa. Los encabezados y separadores distinguen categorías; los iconos,
+colores y nombres identifican las tarjetas. Los subtemas aparecen dentro de la tarjeta
+y un chevrón hacia abajo indica que abre un menú; una flecha lateral indica un enlace.
+A 760 px se usa una columna, incluidas las tarjetas Custom. Cada tema
 Custom abre directamente su guía. Las rutas anteriores siguen funcionando, incluidos
 `/django.html`, `/docker.html`, `/redis.html` y las tres semanas de LLM Engineering.
 La nueva guía usa `/sistemas-agenticos.html` y aparece en `/custom/` y en búsqueda.
@@ -102,27 +119,28 @@ teclado sin desbordar el documento. La impresión oculta navegación y controles
 
 ## Elevation & Depth
 
-Superficies planas, bordes discretos. La elevación se reserva para búsqueda, menús
-y mensajes de copia. Sin blur ni gradientes decorativos en la interfaz compartida.
+Superficies planas y bordes discretos en la lectura. La elevación se reserva para
+búsqueda, menús, mensajes de copia y feedback de hover/foco en tarjetas de temas.
+Los degradados se limitan a esas tarjetas; no hay blur ni fondos decorativos en las guías.
 
 ## Shapes
 
-Radios de 5–6 px para controles y bloques, 8 px para diálogos. Iconos existentes del
+Radios de 5–6 px para controles y bloques, 8 px para diálogos y 9 px para tarjetas de temas. Iconos existentes del
 repositorio y una marca tipográfica pequeña. El estado activo combina texto, fondo
 y borde; el foco tiene un outline separado del control.
 
 ## Components
 
-| Capacidad             | Propietario                                    | Comportamiento verificable                                              |
-| --------------------- | ---------------------------------------------- | ----------------------------------------------------------------------- |
-| Catálogo y biblioteca | `study_catalogue` y partial `study-nav`        | Una lista común; enlace activo por ruta                                 |
-| Menús de tecnología   | `learning.js` / `dialog` nativo                | Apertura, cerrar, Escape, backdrop y retorno de foco                    |
-| Índice del artículo   | `learning.ejs` / `learning.js`                 | Solo H2; un enlace activo; scroll pasivo sin cambiar foco ni URL        |
-| Búsqueda              | `main.js` / partial `search` / `dialog` nativo | Fuse local, tildes, previsualización, teclado, carga, error y reintento |
-| Tema                  | `head.ejs` / `main.js`                         | Preferencia local; fallback al sistema; sin fallo si se bloquea storage |
-| Copiar código         | `learning.js`                                  | Botón visible, feedback accesible y selección manual ante error         |
-| Compartir             | `main.js` / `header.ejs`                       | Redes, correo y copia de enlace; cierre por Escape y retorno de foco    |
-| Scrollbar             | `learning.css`                                 | Tokens globales, estándares y fallback WebKit; contraste forzado nativo |
+| Capacidad           | Propietario                                    | Comportamiento verificable                                               |
+| ------------------- | ---------------------------------------------- | ------------------------------------------------------------------------ |
+| Catálogo            | `study_catalogue` y `index.ejs`                | Categorías y tarjetas comunes con menús o enlaces directos               |
+| Menús de tecnología | `learning.js` / `dialog` nativo                | Sin cruz; cierre por Escape o clic exterior, foco contenido y restaurado |
+| Índice del artículo | `learning.ejs` / `learning.js`                 | Solo H2; un enlace activo; scroll pasivo sin cambiar foco ni URL         |
+| Búsqueda            | `main.js` / partial `search` / `dialog` nativo | Fuse local, tildes, previsualización, teclado, carga, error y reintento  |
+| Tema                | `head.ejs` / `main.js`                         | Preferencia local; fallback al sistema; sin fallo si se bloquea storage  |
+| Copiar código       | `learning.js`                                  | Botón visible, feedback accesible y selección manual ante error          |
+| Compartir           | `main.js` / `header.ejs`                       | Redes, correo y copia de enlace; cierre por Escape y retorno de foco     |
+| Scrollbar           | `learning.css`                                 | Tokens globales, estándares y fallback WebKit; contraste forzado nativo  |
 
 La búsqueda conserva `q` en la URL con codificación y mantiene el fragmento del
 artículo. Usa replaceState para evitar una entrada por pulsación. Borrar devuelve
@@ -132,7 +150,8 @@ Los resultados de red antiguos no sustituyen la consulta más reciente.
 
 El índice usa anchors enlazables y enfoca el encabezado al activarlos. El scroll
 manual actualiza el enlace activo sin crear historial. La búsqueda y los cuatro
-menús son modales nativos; biblioteca e índice son disclosures, no overlays.
+menús son modales nativos; el índice es un disclosure. El clic en el contenido del
+submenú no lo cierra. Volver a la portada con Atrás limpia los diálogos y libera el scroll.
 Sin cuentas, edición de datos, pagos ni acciones externas automáticas.
 
 ## Do's and Don'ts
@@ -145,6 +164,8 @@ el control plegable. Las guías Base muestran el nombre de la tecnología como H
 
 - Explicar conceptos antes de utilizarlos, con variables y resultados identificables.
 - Conservar búsqueda, compartir, copia, temas, navegación y todas las rutas existentes.
+- Elegir temas desde la portada; no volver a añadir una biblioteca lateral redundante.
+- Mantener los submenús sin botón de cierre; clic fuera y Escape los cierran y devuelven el foco.
 - Mantener las guías Base compactas e independientes; Dockerfile y Compose amplían Docker.
 - Fundamentar las tres semanas de LLM Engineering en sus notebooks y versiones del curso.
 - Mantener Asincronía como material explicativo con fragmentos breves, sin programas completos,
@@ -157,12 +178,14 @@ el control plegable. Las guías Base muestran el nombre de la tecnología como H
 
 ## Reconciliación del diseño
 
-| Regla anterior                            | Decisión del usuario                          | Implementación                                          |
-| ----------------------------------------- | --------------------------------------------- | ------------------------------------------------------- |
-| Hero morado y decoración animada          | Usar el diseño limpio del proyecto actual     | Cabecera compacta y catálogo de consulta                |
-| Cada sección en una tarjeta               | Priorizar lectura cómoda                      | Artículo continuo, medida limitada y separadores        |
-| Índice izquierdo y cabecera que se oculta | Adoptar la navegación del proyecto actual     | Biblioteca izquierda, índice derecho y cabecera estable |
-| Dos temas y controles de consulta         | Mantener claro y oscuro y las funcionalidades | Tokens semánticos y mismos controles en todas las guías |
+| Regla anterior                         | Decisión del usuario                            | Implementación                                                          |
+| -------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------- |
+| Hero morado y decoración animada       | Usar el diseño limpio del proyecto actual       | Cabecera compacta y catálogo de consulta                                |
+| Cada sección en una tarjeta            | Priorizar lectura cómoda                        | Artículo continuo, medida limitada y separadores                        |
+| Biblioteca general a la izquierda      | El usuario la considera redundante              | Se elimina del layout, CSS, JavaScript y móvil; selección desde portada |
+| Catálogo en filas con tarjetas neutras | Recuperar el formato visual y colorido anterior | Categorías en dos columnas y tarjetas de tecnología con color           |
+| Cruz de cierre en submenús             | Cerrar solo con clic exterior o Escape          | Se elimina el botón; se mantienen foco, Escape y backdrop               |
+| Dos temas y controles de consulta      | Mantener claro y oscuro y las funcionalidades   | Tokens semánticos y mismos controles en todas las guías                 |
 
 El auditor estático se limita al tema mantenido; no interpreta EJS ni prueba acciones
 en HTML generado. `test:build` inspecciona ese HTML y `test:ui` comprueba sus controles,
