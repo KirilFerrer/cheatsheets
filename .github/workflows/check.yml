@@ -21,5 +21,9 @@ jobs:
       - run: pnpm lint:check
       - run: pnpm build
       - run: pnpm test:build
-      - run: pnpm exec playwright install --with-deps chromium
+      - name: Install Chromium if Chrome is unavailable
+        run: |
+          if [ ! -x /usr/bin/google-chrome ]; then
+            pnpm exec playwright install --with-deps chromium
+          fi
       - run: pnpm test:ui
