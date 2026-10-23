@@ -9,7 +9,6 @@ icon: 'docker'
 categories: ['Toolkit']
 intro: 'Cómo definir una imagen: instrucciones del Dockerfile, contexto de construcción, caché y ciclo de actualización de un servidor Nginx.'
 heading: 'Dockerfile'
-eyebrow: 'Construcción de imágenes'
 learning_classes: 'learning-page learning-docker learning-page-cards'
 background: 'bg-gradient-to-r from-sky-700 to-blue-700 !text-white'
 ---

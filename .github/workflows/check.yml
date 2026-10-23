@@ -8,6 +8,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,3 +21,5 @@ jobs:
       - run: pnpm lint:check
       - run: pnpm build
       - run: pnpm test:build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:ui

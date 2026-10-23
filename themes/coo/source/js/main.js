@@ -53,7 +53,7 @@ function initShareDropdown() {
       i + 224 > s - 8 && (i = s - 224 - 8),
       o + 300 > window.innerHeight && (o = e.top - 300 - 8),
       (n.style.left = `${i}px`),
-      (n.style.top = `${o}px`);
+      (n.style.top = `${Math.max(8, o)}px`);
   }
   function s() {
     t.setAttribute('aria-expanded', 'false'),
@@ -78,7 +78,10 @@ function initShareDropdown() {
       e.contains(t.target) || n.contains(t.target) || s();
     }),
     document.addEventListener('keydown', (e) => {
-      'Escape' === e.key && s();
+      if ('Escape' === e.key && t.getAttribute('aria-expanded') === 'true') {
+        s();
+        t.focus();
+      }
     }),
     window.addEventListener('scroll', i),
     window.addEventListener('resize', i),
@@ -97,9 +100,9 @@ function fallbackCopyToClipboard(e) {
     t.focus(),
     t.select();
   try {
-    document.execCommand('copy'), showCopyNotification('Link copied to clipboard!');
+    document.execCommand('copy'), showCopyNotification('Enlace copiado al portapapeles.');
   } catch {
-    showCopyNotification('Failed to copy link');
+    showCopyNotification('No se pudo copiar el enlace.');
   }
   document.body.removeChild(t);
 }
@@ -108,6 +111,7 @@ function showCopyNotification(e) {
   (t.className =
     'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300'),
     (t.textContent = e),
+    t.setAttribute('role', 'status'),
     document.body.appendChild(t),
     setTimeout(() => {
       t.classList.remove('translate-x-full');
@@ -121,153 +125,105 @@ function showCopyNotification(e) {
 }
 !(function () {
   function e() {
-    const e = document.querySelector('.site-navbar'),
-      t = document.querySelector('.site-navbar-slot');
+    const e = document.getElementById('toc-container'),
+      t = document.getElementById('toc-list');
     if (!e || !t) return;
-    const n = t.closest('header'),
-      i = document.documentElement;
-    let o = window.scrollY,
-      s = 0,
-      a = !0,
-      c = !1;
-    function r(t) {
-      n.classList.toggle('has-floating-navbar', t),
-        e.classList.toggle('is-floating', t),
-        e.classList.toggle('is-visible', a),
-        i.classList.toggle('has-visible-navbar', t && a);
+    const n = document.querySelectorAll('.h2-wrap h2');
+    if (0 === n.length) return void (e.style.display = 'none');
+    function i() {
+      const e = document.querySelectorAll('.toc-link');
+      let i = -1;
+      const o = window.pageYOffset + 100;
+      for (let e = n.length - 1; e >= 0; e--)
+        if (n[e].offsetTop <= o) {
+          i = e;
+          break;
+        }
+      e.forEach((e, t) => {
+        e.classList.remove('active'), t <= i ? e.classList.add('read') : e.classList.remove('read');
+      }),
+        i >= 0 && e[i] && e[i].classList.add('active');
+      let s = 0;
+      i >= 0 && (s = ((i + 1) / n.length) * 100);
+      const a =
+          (window.pageYOffset / (document.documentElement.scrollHeight - window.innerHeight)) * 100,
+        c = Math.max(s, a || 0);
+      t.style.setProperty('--progress-height', `${Math.min(c, 100)}%`);
     }
-    function l() {
-      c = !1;
-      const n = Math.max(0, i.scrollHeight - window.innerHeight),
-        l = Math.max(0, Math.min(window.scrollY, n)),
-        d = l - o;
-      s = Math.sign(d) === Math.sign(s) ? s + d : d;
-      const h = l > t.offsetTop + t.offsetHeight,
-        u = e.contains(document.activeElement) || e.querySelector('[aria-expanded="true"]');
-      !h || u ? (a = !0) : Math.abs(s) >= 8 && (a = s < 0), r(h), (o = l);
-    }
-    function d() {
-      c || ((c = !0), window.requestAnimationFrame(l));
-    }
-    function h() {
-      const n = e.getBoundingClientRect().height;
-      (t.style.height = `${n}px`), i.style.setProperty('--site-navbar-height', `${n}px`), d();
-    }
-    e.addEventListener('focusin', () => {
-      (a = !0), r(e.classList.contains('is-floating'));
-    }),
-      window.addEventListener('scroll', d, { passive: !0 }),
-      window.addEventListener('resize', h),
-      window.addEventListener('pageshow', d),
-      new ResizeObserver(h).observe(e),
-      h();
-  }
-  'loading' === document.readyState ? document.addEventListener('DOMContentLoaded', e) : e();
-})(),
-  (function () {
-    function e() {
-      const e = document.getElementById('toc-container'),
-        t = document.getElementById('toc-list');
-      if (!e || !t) return;
-      const n = document.querySelectorAll('.h2-wrap h2');
-      if (0 === n.length) return void (e.style.display = 'none');
-      function i() {
-        const e = document.querySelectorAll('.toc-link');
-        let i = -1;
-        const o = window.pageYOffset + 100;
-        for (let e = n.length - 1; e >= 0; e--)
-          if (n[e].offsetTop <= o) {
-            i = e;
-            break;
-          }
-        e.forEach((e, t) => {
-          e.classList.remove('active'),
-            t <= i ? e.classList.add('read') : e.classList.remove('read');
-        }),
-          i >= 0 && e[i] && e[i].classList.add('active');
-        let s = 0;
-        i >= 0 && (s = ((i + 1) / n.length) * 100);
-        const a =
-            (window.pageYOffset / (document.documentElement.scrollHeight - window.innerHeight)) *
-            100,
-          c = Math.max(s, a || 0);
-        t.style.setProperty('--progress-height', `${Math.min(c, 100)}%`);
-      }
-      (t.innerHTML = ''),
-        n.forEach((e, n) => {
-          let i = e.textContent.trim().replace(/^#+\s*/, '');
-          const o = e.id || `heading-${n}`;
-          e.id || (e.id = o);
-          const s = document.createElement('a');
-          (s.href = `#${o}`),
-            (s.className = 'toc-link'),
-            s.setAttribute('data-tooltip', i),
-            s.addEventListener('click', (e) => {
-              e.preventDefault();
-              const t = document.getElementById(o);
-              if (t) {
-                const e =
-                  t.getBoundingClientRect().top + window.pageYOffset - window.innerHeight / 2;
-                window.scrollTo({ top: Math.max(0, e), behavior: 'smooth' }),
-                  window.history.replaceState(window.history.state, '', `#${o}`);
-              }
-            }),
-            t.appendChild(s);
-        });
-      let o = !1;
+    (t.innerHTML = ''),
+      n.forEach((e, n) => {
+        let i = e.textContent.trim().replace(/^#+\s*/, '');
+        const o = e.id || `heading-${n}`;
+        e.id || (e.id = o);
+        const s = document.createElement('a');
+        (s.href = `#${o}`),
+          (s.className = 'toc-link'),
+          s.setAttribute('data-tooltip', i),
+          s.addEventListener('click', (e) => {
+            e.preventDefault();
+            const t = document.getElementById(o);
+            if (t) {
+              const e = t.getBoundingClientRect().top + window.pageYOffset - window.innerHeight / 2;
+              window.scrollTo({ top: Math.max(0, e), behavior: 'smooth' }),
+                window.history.replaceState(window.history.state, '', `#${o}`);
+            }
+          }),
+          t.appendChild(s);
+      });
+    let o = !1;
+    e.addEventListener(
+      'touchstart',
+      function () {
+        (o = !0), (e.style.transition = 'none');
+      },
+      { passive: !1 }
+    ),
       e.addEventListener(
-        'touchstart',
-        function () {
-          (o = !0), (e.style.transition = 'none');
+        'touchmove',
+        function (t) {
+          if (!o) return;
+          t.preventDefault();
+          const i = t.touches[0].clientY,
+            s = e.getBoundingClientRect(),
+            a = s.height,
+            c = (i - s.top) / a,
+            r = Math.floor(c * n.length),
+            l = Math.max(0, Math.min(r, n.length - 1)),
+            d = document.querySelectorAll('.toc-link');
+          d.forEach((e, t) => {
+            e.classList.remove('active'),
+              t <= l ? e.classList.add('read') : e.classList.remove('read');
+          }),
+            d[l] && d[l].classList.add('active');
         },
         { passive: !1 }
       ),
-        e.addEventListener(
-          'touchmove',
-          function (t) {
-            if (!o) return;
-            t.preventDefault();
-            const i = t.touches[0].clientY,
-              s = e.getBoundingClientRect(),
-              a = s.height,
-              c = (i - s.top) / a,
-              r = Math.floor(c * n.length),
-              l = Math.max(0, Math.min(r, n.length - 1)),
-              d = document.querySelectorAll('.toc-link');
-            d.forEach((e, t) => {
-              e.classList.remove('active'),
-                t <= l ? e.classList.add('read') : e.classList.remove('read');
-            }),
-              d[l] && d[l].classList.add('active');
-          },
-          { passive: !1 }
-        ),
-        e.addEventListener(
-          'touchend',
-          function (t) {
-            if (!o) return;
-            (o = !1), (e.style.transition = '');
-            const i = t.changedTouches[0].clientY,
-              s = e.getBoundingClientRect(),
-              a = s.height,
-              c = (i - s.top) / a,
-              r = Math.floor(c * n.length),
-              l = Math.max(0, Math.min(r, n.length - 1));
-            if (n[l]) {
-              const e = n[l],
-                t = e.getBoundingClientRect().top + window.pageYOffset - window.innerHeight / 2;
-              window.scrollTo({ top: Math.max(0, t), behavior: 'smooth' }),
-                window.history.replaceState(window.history.state, '', `#${e.id}`);
-            }
-          },
-          { passive: !1 }
-        ),
-        window.addEventListener('scroll', i, { passive: !0 }),
-        window.addEventListener('hashchange', i),
-        i();
-    }
-    'loading' === document.readyState ? document.addEventListener('DOMContentLoaded', e) : e();
-  })(),
+      e.addEventListener(
+        'touchend',
+        function (t) {
+          if (!o) return;
+          (o = !1), (e.style.transition = '');
+          const i = t.changedTouches[0].clientY,
+            s = e.getBoundingClientRect(),
+            a = s.height,
+            c = (i - s.top) / a,
+            r = Math.floor(c * n.length),
+            l = Math.max(0, Math.min(r, n.length - 1));
+          if (n[l]) {
+            const e = n[l],
+              t = e.getBoundingClientRect().top + window.pageYOffset - window.innerHeight / 2;
+            window.scrollTo({ top: Math.max(0, t), behavior: 'smooth' }),
+              window.history.replaceState(window.history.state, '', `#${e.id}`);
+          }
+        },
+        { passive: !1 }
+      ),
+      window.addEventListener('scroll', i, { passive: !0 }),
+      window.addEventListener('hashchange', i),
+      i();
+  }
+  'loading' === document.readyState ? document.addEventListener('DOMContentLoaded', e) : e();
+})(),
   (window.shareOnX = function () {
     const e = encodeURIComponent(window.location.href),
       t = encodeURIComponent(document.title);
@@ -307,7 +263,7 @@ function showCopyNotification(e) {
       ? navigator.clipboard
           .writeText(e)
           .then(() => {
-            showCopyNotification('Link copied to clipboard!');
+            showCopyNotification('Enlace copiado al portapapeles.');
           })
           .catch(() => {
             fallbackCopyToClipboard(e);
@@ -341,12 +297,26 @@ function showCopyNotification(e) {
         (this.lastSearch = {}),
         (window.search = this);
     }
+    const updateThemeLabel = () => {
+      const label = document.documentElement.classList.contains('dark')
+        ? 'Activar tema claro'
+        : 'Activar tema oscuro';
+      const button = document.querySelector('#darkMode');
+      button.setAttribute('aria-label', label);
+      button.title = label;
+    };
+    updateThemeLabel();
     initShareDropdown(),
       document.querySelector('#darkMode').addEventListener('click', () => {
         const e = document.documentElement.classList;
         e.toggle('dark');
         const t = e.contains('dark');
-        localStorage.theme = t ? 'dark' : '';
+        try {
+          localStorage.setItem('theme', t ? 'dark' : '');
+        } catch {
+          /* Theme stays usable for this visit. */
+        }
+        updateThemeLabel();
       }),
       document.querySelectorAll('ul.collapsible > li > strong').forEach((e) => {
         const t = e.parentElement;
@@ -371,19 +341,28 @@ function showCopyNotification(e) {
       (t.prototype = {
         start() {
           const e = this;
-          e.fetchData(),
-            (this.search = document.querySelector(this.container)),
+          (this.search = document.querySelector(this.container)),
             (this.box = document.querySelector('#mysearch-box')),
             (this.input = document.querySelector('#mysearch-input')),
             (this.result = document.querySelector('#mysearch-list')),
+            (this.status = document.querySelector('#mysearch-status')),
             (this.lastSearch.query = this.input.value),
             this.detectModal();
           document.querySelector('.cancel').addEventListener('click', () => {
             e.closeModal(!0);
           });
           document.querySelector('#mysearch-clear').addEventListener('click', () => {
-            e.doSearch('', !0).then();
+            e.input.value = '';
+            e.input.focus();
+            e.doSearch('', !0);
           });
+          this.search.addEventListener('close', () => {
+            document.body.classList.remove('overflow-hidden');
+            e.searchRequest = (e.searchRequest || 0) + 1;
+          });
+          document
+            .querySelector('#mysearch-retry')
+            .addEventListener('click', () => e.doSearch(e.input.value, false));
           const t = document.querySelector(e.trigger);
           t.addEventListener('click', () => {
             e.openModal(!0);
@@ -391,17 +370,20 @@ function showCopyNotification(e) {
             document.body.addEventListener('click', (n) => {
               e.isOpened() && (e.box.contains(n.target) || t.contains(n.target) || e.closeModal());
             }),
-            this.input.addEventListener('input', () => {
+            this.input.addEventListener('input', (event) => {
+              if (event.isComposing) return;
               const t = e.input.value;
               t !== e.lastSearch.query && e.doSearch(t, !0).then();
             }),
+            this.input.addEventListener('compositionend', () => e.doSearch(e.input.value, true)),
             document.body.addEventListener('keydown', (t) => {
-              if (!t.target.closest('dialog[open]'))
+              if (t.isComposing) return;
+              if (!t.target.closest('dialog[open]:not(#mysearch)'))
                 if ('ArrowDown' === t.key)
                   e.isOpened() && (e.moveItem(!1), t.preventDefault(), t.stopPropagation());
                 else if ('ArrowUp' === t.key)
                   e.isOpened() && (e.moveItem(!0), t.preventDefault(), t.stopPropagation());
-                else if ('Enter' === t.key && e.isOpened()) {
+                else if ('Enter' === t.key && e.isOpened() && t.target === e.input) {
                   if (e.isOpened()) {
                     const t = e.result.querySelector('li.active > a');
                     null !== t && (window.location.href = t.getAttribute('href'));
@@ -411,7 +393,7 @@ function showCopyNotification(e) {
                   'Escape' === t.key && e.isOpened()
                     ? (e.closeModal(), t.preventDefault(), t.stopPropagation())
                     : (!t.ctrlKey && !t.metaKey) ||
-                      'k' !== t.key ||
+                      'k' !== t.key.toLowerCase() ||
                       t.shiftKey ||
                       (e.toggleModal(), t.preventDefault(), t.stopPropagation());
             });
@@ -425,7 +407,8 @@ function showCopyNotification(e) {
             t.classList.add('inactive'),
             n.classList.remove('inactive'),
             n.classList.add('active'),
-            this.renderPreview());
+            this.renderPreview(),
+            n.scrollIntoView({ block: 'nearest' }));
         },
         detectModal() {
           const e = window.location.href,
@@ -433,79 +416,82 @@ function showCopyNotification(e) {
           null !== t && ((this.input.value = t), this.openModal(!1));
         },
         isOpened() {
-          return this.search.classList.contains('block');
+          return this.search.open;
         },
         toggleModal() {
           this.isOpened() ? this.closeModal() : this.openModal();
         },
-        openModal(e) {
-          this.search.classList.remove('hidden'),
-            this.search.classList.add('block'),
-            e && (this.input.value = ''),
-            document.body.classList.add('overflow-hidden'),
-            this.doSearch(this.input.value, !1),
-            this.input.focus();
+        openModal(clear) {
+          if (!this.search.open) this.search.showModal();
+          if (clear) this.input.value = '';
+          document.body.classList.add('overflow-hidden');
+          this.doSearch(this.input.value, false);
+          this.input.focus();
         },
-        closeModal(e) {
-          this.search.classList.remove('block'),
-            this.search.classList.add('hidden'),
-            e && (this.input.value = ''),
-            document.body.classList.remove('overflow-hidden'),
-            this.input.blur();
+        closeModal(clear) {
+          if (clear) this.input.value = '';
+          if (this.search.open) this.search.close();
+          document.body.classList.remove('overflow-hidden');
         },
-        changeUrl(e) {
-          const t = `${location.protocol}//${location.host}${location.pathname}`;
-          let n = t;
-          '' !== e && null !== e && (n = `${t}?${e}`), history.pushState({}, null, n);
+        changeUrl(query) {
+          const url = new URL(window.location.href);
+          if (query) url.searchParams.set('q', query);
+          else url.searchParams.delete('q');
+          history.replaceState(history.state, '', url);
         },
         async fetchData() {
-          const e = this;
-          if (void 0 === e.index)
-            return await fetch(e.dbPath)
-              .then((e) => e.text())
-              .then(
-                (t) => (
-                  (e.db = JSON.parse(t)),
-                  (e.index = new Fuse(e.db, {
-                    includeScore: !1,
-                    shouldSort: !0,
-                    includeMatches: !0,
-                    matchEmptyQuery: !0,
-                    threshold: 0.1,
-                    keys: [
-                      { name: 'title', weight: 12 },
-                      { name: 'tags', weight: 6 },
-                      { name: 'categories', weight: 6 },
-                      { name: 'sections.h3.title', weight: 5 },
-                      { name: 'sections.h2.title', weight: 1 },
-                      { name: 'intro', weight: 1 }
-                    ]
-                  })),
-                  (e.lastSearch.whole = e.db.map((e, t) => ({
-                    item: e,
-                    score: 1,
-                    refIndex: t
-                  }))),
-                  t
-                )
-              );
-        },
-        async doSearch(e, t) {
-          const n = this;
-          const request = (this.searchRequest = (this.searchRequest || 0) + 1);
-          await n.fetchData().then(() => {
-            if (request !== this.searchRequest) return;
-            if (this.lastSearch.query === e && void 0 !== this.lastSearch.resp)
-              this.renderResult(this.lastSearch.resp), this.renderPreview();
-            else {
-              const i = '' !== e ? n.index.search(`${e}`) : n.lastSearch.whole;
-              t && this.changeUrl('' === e ? null : `q=${e}`),
-                (this.lastSearch.query = e),
-                (this.lastSearch.resp = i),
-                this.renderResult(i),
-                this.renderPreview();
-            }
+          if (this.index) return;
+          if (this.fetchPromise) return this.fetchPromise;
+          this.fetchPromise = (async () => {
+            const response = await fetch(this.dbPath);
+            if (!response.ok) throw new Error('Search unavailable');
+            this.db = await response.json();
+            this.index = new Fuse(this.db, {
+              includeMatches: true,
+              threshold: 0.25,
+              ignoreDiacritics: true,
+              keys: [
+                { name: 'title', weight: 12 },
+                { name: 'tags', weight: 6 },
+                { name: 'categories', weight: 6 },
+                { name: 'sections.h3.title', weight: 5 },
+                { name: 'sections.h2.title', weight: 3 },
+                { name: 'intro', weight: 1 }
+              ]
+            });
+            this.lastSearch.whole = this.db.map((item, refIndex) => ({ item, refIndex }));
+          })().finally(() => {
+            this.fetchPromise = null;
           });
+          return this.fetchPromise;
+        },
+        async doSearch(query, updateUrl) {
+          const request = (this.searchRequest = (this.searchRequest || 0) + 1);
+          const clear = document.querySelector('#mysearch-clear');
+          clear.hidden = query.length === 0;
+          document.querySelector('#mysearch-retry').hidden = true;
+          if (updateUrl) this.changeUrl(query);
+          if (!this.index) this.status.textContent = 'Cargando apuntes…';
+          try {
+            await this.fetchData();
+            if (request !== this.searchRequest) return;
+            const results = query.trim() ? this.index.search(query.trim()) : this.lastSearch.whole;
+            this.lastSearch.query = query;
+            this.lastSearch.resp = results;
+            this.renderResult(results);
+            document.querySelector('.preview-panel').replaceChildren();
+            this.renderPreview();
+            this.status.textContent = results.length
+              ? `${results.length} ${results.length === 1 ? 'guía encontrada' : 'guías encontradas'}`
+              : 'No hay resultados. Prueba otro término o borra la búsqueda.';
+          } catch {
+            if (request !== this.searchRequest) return;
+            this.result.replaceChildren();
+            document.querySelector('.preview-panel').replaceChildren();
+            this.status.textContent =
+              'No se pudieron cargar los apuntes. Comprueba la conexión y vuelve a intentarlo.';
+            document.querySelector('#mysearch-retry').hidden = false;
+          }
         },
         addEventToResult() {
           const e = this;
@@ -523,6 +509,7 @@ function showCopyNotification(e) {
         },
         mark(e, t) {
           const n = [];
+          t = t.map((range) => [...range]);
           let i = t.shift();
           for (let o = 0; o < e.length; o++) {
             const s = e.charAt(o);
@@ -563,43 +550,41 @@ function showCopyNotification(e) {
               }
             });
         },
-        renderResult(e) {
-          const t = this;
-          let n = '',
-            i = 0;
-          e.forEach((e, o) => {
-            let s = 'inactive';
-            0 === i && (s = 'active'), t.highlightMatches(e);
-            const a = e.item,
-              c = a.tags || [],
-              r = a.categories || [],
-              l = c.join("<span class='text-slate-300 px-1'>•</span>");
-            let d = '';
-            '' !== l &&
-              (d = `<div class="w-px h-3 bg-indigo-300 mr-2"></div><span class="mr-2">${l}</span>`),
-              (n += `<li class="group ${s} m-3" data-index="${o}">\n                                <a href="${a.path}" class="flex justify-between items-center rounded-lg py-1 px-4 transition-colors duration-100 ease-in-out overflow-hidden">\n                                    <div class="flex items-start">\n                                        <div class="flex justify-center items-center w-5 mr-5 mt-2 flex-none">\n                                            <i class="icon text-2xl">${a.icon}</i>\n                                        </div>\n                                        <div class="flex flex-col truncate">\n                                            <span class="font-semibold dark:text-slate-300 dark:group-hover:text-white">${a.title}</span>\n                                            <div class="sub-intro flex items-center text-sm leading-tight mt-4 xl:mt-2 mb-2">\n                                                <span class="mr-2">${r[0]}</span>\n                                                ${d}\n                                            </div>\n                                        </div>\n                                    </div>\n                                    <i class="w-6 ml-8 p-2 icon icon-enter"></i>\n                                </a>\n                            </li>`),
-              i++;
-          }),
-            (this.result.innerHTML = n),
-            this.addEventToResult();
+        renderResult(results) {
+          this.result.innerHTML = results
+            .map((entry, index) => {
+              this.highlightMatches(entry);
+              const item = entry.item;
+              const keywords = [...item.categories, ...item.tags].join(' · ');
+              return `<li class="${index === 0 ? 'active' : 'inactive'}" data-index="${index}">
+              <a href="${item.path}"><span class="study-result-icon" aria-hidden="true">${item.icon}</span>
+              <span class="study-result-copy"><strong>${item.title}</strong><small>${keywords}</small></span></a>
+            </li>`;
+            })
+            .join('');
+          this.addEventToResult();
         },
         renderPreview() {
-          const e = this.search.querySelector('li.active');
-          if (null === e) return;
-          const t = e.getAttribute('data-index'),
-            n = this.lastSearch.resp[parseInt(t)].item;
-          let i = '';
-          n.sections.forEach((e) => {
-            let t = '';
-            e.h3.forEach((e) => {
-              const i = n.path + e.anchor;
-              t += `<a href="${i}" class="inline-block mr-1 px-2 p-0.5 transition duration-200 ease-in-out rounded-full hover:bg-indigo-500 text-slate-500 dark:text-slate-300 hover:text-slate-50">${e.title.toLowerCase()}</a>`;
-            });
-            const o = n.path + e.h2.anchor;
-            i += `<li class="text-slate-700 dark:text-slate-300 hover:underline hover:text-slate-900 mt-3 mb-2">\n                                <a href="${o}"> ${e.h2.title}</a>\n                            </li>\n                            <span>${t}</span>`;
-          }),
-            (document.querySelector('.preview-panel').innerHTML =
-              `<section class="w-full py-3 px-5">\n                <div class="flex justify-center pt-1 pb-4">\n                    <div class="flex justify-center items-center w-8 h-8 rounded ${void 0 === n.background ? 'bg-indigo-500' : n.background} shadow-lg">\n                        <i class="text-2xl text-slate-100">${n.icon}</i>\n                    </div>\n                </div>\n                <div class="flex justify-center items-center font-medium flex-wrap dark:text-slate-200">${n.title}</div>\n                <ol class="list-inside mt-4 pt-2 text-sm list-decimal">${i}</ol>\n            </section>`);
+          const active = this.result.querySelector('li.active');
+          const panel = document.querySelector('.preview-panel');
+          if (!active) {
+            panel.replaceChildren();
+            return;
+          }
+          const item = this.lastSearch.resp[Number(active.dataset.index)].item;
+          const sections = item.sections
+            .map((section) => {
+              const children = section.h3.length
+                ? `<ul>${section.h3
+                    .map(
+                      (child) => `<li><a href="${item.path}${child.anchor}">${child.title}</a></li>`
+                    )
+                    .join('')}</ul>`
+                : '';
+              return `<li><a href="${item.path}${section.h2.anchor}">${section.h2.title}</a>${children}</li>`;
+            })
+            .join('');
+          panel.innerHTML = `<div class="study-search-preview"><p class="study-preview-title">${item.title}</p><ol>${sections}</ol></div>`;
         }
       }),
       Utils.externalLibrary(Utils.LIBRARY.fuse)

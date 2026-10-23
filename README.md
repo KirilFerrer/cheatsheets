@@ -11,7 +11,10 @@ ejemplos de código y explicaciones de las operaciones utilizadas en el curso.
 Week 3 desarrolla la inferencia con Hugging Face, tokenizadores, cuantización
 y la creación de actas a partir de audio.
 
-**Custom** reúne conceptos específicos de programación. Su primer apartado,
+**Custom** reúne conceptos específicos de programación. **Sistemas agénticos** resume
+el proyecto del mismo nombre: 18 lecciones sobre bucle, contexto, herramientas,
+recuperación, coordinación, seguridad y evaluación, con un caso de exportación CSV.
+Se abre en `/sistemas-agenticos.html`, junto a **Asincronía**. Este último apartado,
 **Asincronía**, desarrolla corrutinas, tareas, esperas, sincronización y cancelación
 con explicaciones didácticas y fragmentos breves de código integrados en el texto.
 
@@ -25,7 +28,7 @@ npx pnpm@10.32.1 install --frozen-lockfile
 npm run dev
 ```
 
-Abre http://localhost:4000. Los nueve documentos están en `source/_posts/`.
+Abre http://localhost:4000. Los diez documentos están en `source/_posts/`.
 La plantilla de lectura es `themes/coo/layout/learning.ejs`; los estilos comunes,
 `themes/coo/source/css/learning.css`. El catálogo tiene cuatro menús de tecnologías
 y una sección **Custom** con enlaces directos a sus temas.
@@ -49,7 +52,13 @@ su efecto. No contiene programas completos, instrucciones para crear y ejecutar
 archivos, ejercicios ni laboratorios. Tampoco carga un intérprete o muestra
 controles de ejecución en la web.
 
-Las guías usan `learning-page-cards`. `disableNunjucks: true` permite explicar templates Django
+La interfaz toma como referencia el proyecto Sistemas agénticos: biblioteca lateral,
+artículo continuo e índice derecho que se pliega en pantallas pequeñas. Conserva
+los temas claro y oscuro, los cuatro menús de tecnologías, la búsqueda con
+previsualización, compartir y copiar código.
+
+Las guías conservan la clase `learning-page-cards` por compatibilidad; los apartados
+ahora se separan con espacio y líneas, sin tarjetas anidadas. `disableNunjucks: true` permite explicar templates Django
 sin que Hexo intente ejecutar su sintaxis. El índice se genera a partir de los
 encabezados del documento.
 
@@ -59,12 +68,22 @@ encabezados del documento.
 npm run lint:check
 npm run build
 npm run test:build
+npm run test:ui
 ```
 
-La comprobación exige exactamente las nueve rutas y sus opciones de menú,
+La comprobación exige exactamente las diez rutas y sus opciones de menú,
 estilos de lectura consistentes, todos los encabezados renderizados y enlaces
 internos válidos. Los cambios de interfaz requieren además comprobar búsqueda,
 menús, copia de código, navegación con teclado y pantallas estrechas.
+
+Las pruebas UI usan Chrome en `/usr/bin/google-chrome` (`CHROME_PATH` permite
+otra ruta) y un servidor estático con Python 3. Recorren las diez guías en escritorio
+y móvil, en ambos temas, con axe, teclado, búsquedas sin resultados, errores de red,
+portapapeles y almacenamiento bloqueado. No requieren servicios externos.
+
+La procedencia del resumen se registra en `docs/sistemas-agenticos-source.json`
+con ids de lecciones y hashes de los archivos de origen. El contenido de
+Asincronía se conserva.
 
 Cada guía explica el contexto de sus fragmentos, las funciones y los parámetros
 que introduce.

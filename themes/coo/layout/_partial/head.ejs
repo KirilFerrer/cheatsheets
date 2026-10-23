@@ -73,11 +73,11 @@
     <!-- styles -->
     <%- css('css/style.css') %>
     <%- css('css/learning.css') %>
+    <link rel="preload" href="/assets/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
     <script>
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            let html = document.documentElement.classList;
-            html.toggle('dark')
-        }
+        let dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        try { const saved = localStorage.getItem('theme'); if (saved !== null) dark = saved === 'dark'; } catch {}
+        document.documentElement.classList.toggle('dark', dark);
     </script>
 
     <!-- Structured Data for SEO -->

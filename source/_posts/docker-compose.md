@@ -9,7 +9,6 @@ icon: 'docker'
 categories: ['Toolkit']
 intro: 'Cómo describir una aplicación en compose.yaml, construir su imagen y administrar sus contenedores, puertos y archivos.'
 heading: 'Docker Compose'
-eyebrow: 'Configuración y ejecución'
 learning_classes: 'learning-page learning-docker learning-page-cards'
 background: 'bg-gradient-to-r from-sky-700 to-blue-700 !text-white'
 ---
@@ -37,8 +36,6 @@ compose.yaml → build → Dockerfile + archivos → imagen
 ```
 
 ## 2. Describir la web en compose.yaml
-
-### Archivos y punto de partida
 
 Se necesita Docker arrancado y Compose disponible. `docker compose version` comprueba la herramienta. Los comandos siguientes se ejecutan desde la carpeta `web-docker` del host, con esta estructura:
 

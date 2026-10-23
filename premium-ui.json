@@ -1,0 +1,17 @@
+{
+  "profile": "content-site",
+  "sourceRoots": ["themes/coo/source/js", "themes/coo/source/css", "themes/coo/layout"],
+  "locale": "es-ES",
+  "canonicalMap": "DESIGN.md",
+  "requiredCommands": ["lint", "build", "routes", "browser"],
+  "commands": {
+    "lint": "npm run lint:check",
+    "build": "npm run build",
+    "routes": "npm run test:build",
+    "browser": "npm run test:ui"
+  },
+  "evidence": {
+    "failurePaths": "tests/reading.spec.cjs",
+    "keyboard": "tests/reading.spec.cjs"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "project": "plataformas-agenticas",
+  "reviewed": "2026-10-23",
+  "scope": "Resumen de las 18 lecciones; interfaz adaptada a Sheet Codes con temas claro y oscuro.",
+  "sourceFiles": {
+    "src/content/course.ts": "6fb5d892647c32eb0fecafa8cab630b2d1d5cdcd07764995987529bbf839eee9",
+    "src/content/sources.ts": "a4e632f3cd332ba424483d718ef39e4c04dff4d71940d417da1fc514f4ac9786",
+    "src/examples/agente_minimo.py": "8f589e3b28b42e97d15ed2080db238fa943b9f6cdb2347e9dd2598be175317cb",
+    "src/content/course-foundations.ts": "12c069ff7da035dda96e93a95965534addeb9c3f3fda203fdbc6dfd27c9856e6",
+    "src/content/course-context.ts": "e30d0a3b33126192bd38d64c333df793959c2fb81be7b3d2eb3878c0a8cec83d",
+    "src/content/course-execution.ts": "feafd65b305ebd3de950936535280efc2cdc4bcd9ae4023ba24bce7829923488",
+    "src/content/course-coordination.ts": "6c4ea2c2965eace0a909c7a13dab6428ac11d18c130dbd8549e0cefcc4f505e8",
+    "src/content/course-operation.ts": "56264bb9a9667daa735ccb99660eddcd155c24eac1ba89c368295d7c1a46eb90",
+    "src/content/course-project.ts": "2f826860c8dcf81f4fffb6f2c38576437bc4c743bc4aee1bc72f8924b858a0c7"
+  },
+  "lessonIds": [
+    "que-es-un-agente",
+    "bucle-del-agente",
+    "contratos-de-herramientas",
+    "primer-agente",
+    "sesiones-y-estado",
+    "construir-contexto",
+    "memoria-y-rag",
+    "compaction",
+    "workspace-y-sandbox",
+    "orquestacion",
+    "fallos-y-reintentos",
+    "eventos-y-streaming",
+    "varios-agentes",
+    "inbox-y-activaciones",
+    "modelos-y-costes",
+    "seguridad",
+    "observabilidad-y-evaluacion",
+    "proyecto-final"
+  ],
+  "destination": "source/_posts/sistemas-agenticos.md"
+}

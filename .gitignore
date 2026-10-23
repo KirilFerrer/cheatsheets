@@ -100,3 +100,7 @@ db.json
 
 # Local research sources
 .firecrawl/
+
+# Browser verification
+playwright-report/
+premium-audit.json

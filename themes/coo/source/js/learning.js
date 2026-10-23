@@ -3,6 +3,7 @@
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const resetDialogs = [];
   document.querySelectorAll('.series-dialog').forEach((dialog) => {
+    dialog.querySelector('[data-close-series]')?.addEventListener('click', () => dialog.close());
     let opener;
     let restoring = false;
     if (typeof dialog.showModal !== 'function') return;
@@ -113,6 +114,14 @@
   });
 
   // Long-form guides keep copy actions visible for touch and keyboard users.
+  const navigation = document.querySelector('.study-navigation');
+  const mobile = window.matchMedia('(max-width: 760px)');
+  const updateNavigation = () => {
+    if (navigation) navigation.open = !mobile.matches;
+  };
+  updateNavigation();
+  mobile.addEventListener('change', updateNavigation);
+
   const article = document.querySelector('.learning-content');
   if (!article) return;
 
@@ -157,7 +166,7 @@
     activeLink = current.link;
 
     // Keep a long desktop index readable without moving the document or keyboard focus.
-    if (sidebar && window.matchMedia('(min-width: 901px)').matches) {
+    if (sidebar && window.matchMedia('(min-width: 1201px)').matches) {
       const bounds = sidebar.getBoundingClientRect();
       const linkBounds = activeLink.getBoundingClientRect();
       if (linkBounds.top < bounds.top) sidebar.scrollTop += linkBounds.top - bounds.top - 8;
@@ -238,7 +247,7 @@
   article.querySelectorAll('pre, table').forEach((block) => {
     block.tabIndex = 0;
   });
-  if (window.matchMedia('(max-width: 900px)').matches) {
+  if (window.matchMedia('(max-width: 1200px)').matches) {
     document.querySelectorAll('.learning-sidebar details').forEach((details) => {
       details.open = false;
     });

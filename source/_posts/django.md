@@ -9,7 +9,6 @@ icon: 'django'
 categories: ['Python']
 intro: 'De una petición web a una aplicación de artículos: proyecto, rutas, modelos, páginas y formularios con Django.'
 heading: 'Base'
-eyebrow: 'Fundamentos'
 learning_classes: 'learning-page learning-django learning-page-cards'
 background: 'bg-gradient-to-r from-emerald-700 to-green-900 !text-white'
 ---
@@ -348,7 +347,7 @@ Por último, añade dentro del `nav` de `base.html`, después del enlace al list
 
 Al abrir ese enlace con la sesión administrativa iniciada, aparece el formulario. Un envío válido guarda el artículo y abre su detalle. Un título demasiado largo o un campo vacío no se guarda. Aunque el navegador también comprueba algunas restricciones, el servidor valida todos los envíos.
 
-## 8. Mantener el recorrido comprensible
+## 8. Reanudar el servidor y diagnosticar errores
 
 La aplicación ya permite leer artículos y crearlos con una cuenta autorizada; la administración incorpora edición y borrado. Cada responsabilidad tiene un lugar: los datos en el modelo, la entrada en el formulario, la decisión en la view, las direcciones en las URLs y la presentación en los templates.
 

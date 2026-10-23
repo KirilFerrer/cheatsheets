@@ -5,13 +5,13 @@
       <% if (page.series_path) { %><a href="<%= page.series_path %>"><%= page.series_title %></a><% } else { %><span><%= page.series_title || (page.icon === 'django' ? 'Django' : page.icon === 'docker' ? 'Docker' : 'Redis') %></span><% } %>
       <span aria-hidden="true">/</span><span aria-current="page"><%= page.heading %></span>
     </nav>
-    <h1><%= page.heading %></h1>
+    <h1><%= page.heading === 'Base' ? (page.icon === 'django' ? 'Django' : page.icon === 'docker' ? 'Docker' : 'Redis') : page.heading %></h1>
     <p class="learning-deck"><%= page.intro %></p>
   </header>
   <div class="learning-layout">
     <aside class="learning-sidebar">
       <details class="learning-on-page" open>
-        <summary>Índice</summary>
+        <summary aria-label="Mostrar u ocultar índice" title="Mostrar u ocultar índice"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 6h13M8 12h13M8 18h13M3 6h1M3 12h1M3 18h1"/></svg><span class="learning-index-label">Índice</span></summary>
         <nav aria-label="Índice de esta página"><ol>
           <% (page.sections || []).forEach(function(section) { %>
             <li><a href="<%= section.h2.anchor %>"><%- section.h2.title %></a></li>

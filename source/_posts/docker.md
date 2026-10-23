@@ -9,7 +9,6 @@ icon: 'docker'
 categories: ['Toolkit']
 intro: 'Imágenes, contenedores, puertos y archivos: cómo ejecutar una aplicación, construir su imagen y mantener su configuración con Compose.'
 heading: 'Base'
-eyebrow: 'Fundamentos'
 learning_classes: 'learning-page learning-docker learning-page-cards'
 background: 'bg-gradient-to-r from-sky-700 to-blue-700 !text-white'
 ---
@@ -46,8 +45,6 @@ docker context show
 
 ## 2. Ejecutar un servidor y publicar su puerto
 
-### Un contenedor con una función concreta
-
 Nginx es un servidor web: recibe peticiones HTTP y devuelve archivos como páginas HTML. Su imagen oficial incluye el programa y una página de bienvenida. Desde la terminal del host:
 
 ```bash
@@ -78,8 +75,6 @@ El puerto **8080** pertenece al host y el **80** al contenedor. No tienen por qu
 La publicación no configura el servidor: Nginx ya escucha en el puerto 80 por su configuración de imagen. El contenedor permanece activo mientras continúa su proceso principal.
 
 ## 3. Incorporar archivos propios a una imagen
-
-### Una página con ubicación definida
 
 La siguiente imagen servirá una página informativa. En el host, crear una carpeta y entrar en ella:
 
@@ -117,7 +112,7 @@ Contenido de `sitio/index.html`:
 
 HTML describe la página que interpreta el navegador. `doctype` declara el formato; `lang` indica el idioma y `charset` permite representar las tildes. `title` da nombre a la pestaña. `body` contiene el contenido visible: `h1` es el encabezado y `p`, un párrafo. Nginx envía este archivo; no ejecuta Python ni necesita una base de datos.
 
-### La receta de construcción
+### Dockerfile
 
 En `Dockerfile`, sin extensión:
 
@@ -142,8 +137,6 @@ Cada línea excluye una ruta del contexto enviado al constructor: `.git` contien
 El tema [Dockerfile](/docker-dockerfile.html) desarrolla la lectura de las instrucciones, el contexto, la caché de construcción y la diferencia entre preparar una imagen y arrancar su programa.
 
 ## 4. Construir, ejecutar y entender el ciclo de vida
-
-### La imagen propia
 
 Desde `web-docker`, construir la imagen:
 
@@ -180,7 +173,7 @@ Construir una imagen actualizada no cambia los contenedores existentes. Para uti
 
 ## 5. Compartir archivos y conservar datos
 
-### Un montaje para trabajar con el HTML local
+### Montar una carpeta local
 
 Un **bind mount** hace visible una carpeta del host dentro del contenedor. Permite que Nginx lea directamente el HTML local durante la edición, sin reconstruir una imagen tras cada cambio.
 
@@ -198,7 +191,7 @@ La barra `\` continúa el mismo comando en otra línea. `--mount` describe el mo
 
 Tras cambiar el horario en `sitio/index.html` y recargar el navegador, Nginx sirve el nuevo contenido. El montaje oculta los archivos que la imagen traía en esa carpeta mientras está activo; no los modifica. La carpeta `sitio` debe existir en el host del motor.
 
-### Un volumen tiene otra finalidad
+### Volúmenes persistentes
 
 Un **volumen con nombre** es un almacenamiento administrado por Docker que se monta en una ruta del contenedor y puede reutilizarse al recrearlo. Resulta apropiado para archivos generados por una aplicación que deben sobrevivir a su sustitución, como documentos recibidos de sus usuarios.
 
@@ -211,8 +204,6 @@ Un **volumen con nombre** es un almacenamiento administrado por Docker que se mo
 Un volumen solo conserva lo que la aplicación escribe en su ruta montada. No guarda cualquier archivo del contenedor ni sustituye una copia de seguridad. Esta web solo lee su HTML, por lo que no necesita un volumen para datos.
 
 ## 6. Describir la aplicación con Compose
-
-### La configuración queda en un archivo
 
 Compose permite guardar la configuración en `compose.yaml` y gestionar el conjunto mediante comandos. Un **servicio** es la definición de un componente ejecutable; aquí habrá uno llamado `web`.
 
@@ -254,8 +245,6 @@ El tema [Docker Compose](/docker-compose.html) explica con más detalle cómo se
 
 ## 7. Aplicar cambios sin confundir las operaciones
 
-### Código, imagen y contenedor se actualizan por separado
-
 Para incorporar una modificación del HTML o del Dockerfile en esta configuración:
 
 ```bash
@@ -284,8 +273,6 @@ docker compose up -d
 El ejemplo utiliza `build:`, por lo que su actualización se hace construyendo. `image:` se utiliza cuando el servicio debe partir de una imagen identificada, por ejemplo `nginx:stable-alpine`.
 
 ## 8. Inspeccionar, detener y resolver los primeros fallos
-
-### Ver lo que ocurre dentro
 
 Desde la carpeta del proyecto:
 

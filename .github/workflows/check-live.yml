@@ -58,10 +58,11 @@ jobs:
                       '/llm-week-2.html': 'LLM Engineering · Week 2',
                       '/llm-week-3.html': 'LLM Engineering · Week 3',
                       '/python-asincronia.html': 'Python · Asincronía',
+                      '/sistemas-agenticos.html': 'Sistemas agénticos',
                   }
                   assert {sheet['path']: sheet['title'] for sheet in sheets} == expected_titles
                   assert all(sheet.get('title') and sheet['path'].startswith('/') for sheet in sheets)
-                  assert {sheet['path'].split('-')[0].split('.')[0] for sheet in sheets} == {'/django', '/docker', '/redis', '/llm', '/python'}
+                  assert {sheet['path'].split('-')[0].split('.')[0] for sheet in sheets} == {'/django', '/docker', '/redis', '/llm', '/python', '/sistemas'}
                   for sheet in sheets:
                       with urlopen(Request(origin + sheet['path'], headers=headers), timeout=20) as response:
                           html = response.read().decode()
@@ -75,7 +76,7 @@ jobs:
                   print(f'All {len(sheets)} topic pages have their shared reading layout')
               if route == '/site-version.json':
                   version = json.loads(body)
-                  assert version['guides'] == 9
+                  assert version['guides'] == 10
                   if os.environ.get('EXPECTED_REVISION'):
                       assert version['revision'] == os.environ['EXPECTED_REVISION'], version
               if route in ['/robots.txt', '/sitemap.xml']:
@@ -86,5 +87,5 @@ jobs:
                   assert '>Custom</h2>' in body and 'href="/python-asincronia.html"' in body
                   assert '<p>Asincronía</p>' in body
               if route == '/custom/':
-                  assert '/python-asincronia.html' in body
+                  assert '/python-asincronia.html' in body and '/sistemas-agenticos.html' in body
               print(route, status, final_url)

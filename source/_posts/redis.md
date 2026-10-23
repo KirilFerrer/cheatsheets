@@ -9,7 +9,6 @@ icon: 'redis'
 categories: ['Database']
 intro: 'Servidor, claves, caducidad y conexión desde Python. Fundamentos para implementar una caché y comprender cómo se guarda, recupera y actualiza la información.'
 heading: 'Base'
-eyebrow: 'Fundamentos'
 learning_classes: 'learning-page learning-redis learning-page-cards'
 background: 'bg-gradient-to-r from-red-700 to-red-900 !text-white redis-card'
 ---

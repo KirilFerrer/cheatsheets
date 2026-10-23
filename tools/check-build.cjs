@@ -14,7 +14,8 @@ const titles = {
   'llm-week-1': 'LLM Engineering · Week 1',
   'llm-week-2': 'LLM Engineering · Week 2',
   'llm-week-3': 'LLM Engineering · Week 3',
-  'python-asincronia': 'Python · Asincronía'
+  'python-asincronia': 'Python · Asincronía',
+  'sistemas-agenticos': 'Sistemas agénticos'
 };
 const expected = Object.keys(titles);
 assert.deepEqual(
@@ -36,6 +37,12 @@ for (const sheet of search) {
     }
   }
   assert(html.includes('css/learning.css'), `Missing reading styles: ${slug}`);
+  assert(
+    !/En esta página|Qué aprenderás|Qué vas a aprender|Objetivos de aprendizaje|learning-eyebrow/i.test(
+      html
+    ),
+    `Unnecessary guide labels: ${slug}`
+  );
   assert(html.includes('learning-page-cards'), `Inconsistent layout: ${slug}`);
   assert.equal(sheet.title, titles[slug], `Incorrect guide title: ${slug}`);
   const headings = [...source.matchAll(/^## (.+)$/gm)].map((match) => match[1]);
@@ -112,8 +119,11 @@ assert(customGrid, 'Missing Custom topic cards');
 const customLinks = [...customGrid.matchAll(/<a\b[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g)];
 assert.deepEqual(
   customLinks.map((link) => [link[1], stripHTML(link[2]).trim()]),
-  [['/python-asincronia.html', 'Asincronía']],
-  'The Custom section must offer a direct Asincronía card'
+  [
+    ['/python-asincronia.html', 'Asincronía'],
+    ['/sistemas-agenticos.html', 'Sistemas agénticos']
+  ],
+  'Custom topics must link directly to both guides'
 );
 const catalogue = {
   django: [['django', 'Base']],
@@ -153,6 +163,24 @@ assert(
   fs.readFileSync(path.join(output, 'css/learning.css'), 'utf8').includes('.learning-page-cards')
 );
 assert(fs.existsSync(path.join(output, 'js/learning.js')));
+for (const slug of expected) {
+  const html = fs.readFileSync(path.join(output, `${slug}.html`), 'utf8');
+  assert(html.includes('study-navigation'), `Missing shared navigation: ${slug}`);
+  assert(
+    html.includes(`href="/${slug}.html" aria-current="page"`),
+    `Missing active guide: ${slug}`
+  );
+}
+const agentGuide = fs.readFileSync(path.join(output, 'sistemas-agenticos.html'), 'utf8');
+assert(agentGuide.includes('href="/custom/"'));
+assert(/<h1[^>]*>Sistemas agénticos<\/h1>/.test(agentGuide));
+assert(
+  fs
+    .readFileSync(path.join(output, 'custom/index.html'), 'utf8')
+    .includes('/sistemas-agenticos.html')
+);
+const version = JSON.parse(fs.readFileSync(path.join(output, 'site-version.json'), 'utf8'));
+assert.equal(version.guides, expected.length);
 const pythonGuide = fs.readFileSync(path.join(output, 'python-asincronia.html'), 'utf8');
 assert(!/data-python-demo|python-labs|python-worker|pyodide/i.test(pythonGuide));
 assert(/<h1\b[^>]*>Asincronía<\/h1>/.test(pythonGuide));
